@@ -1,20 +1,25 @@
-import React, { Component } from 'react';
-import { setObservableConfig } from 'recompose';
-import mostConfig from 'recompose/mostObservableConfig'
-
+import React from 'react';
+import { setObservableConfig,  } from 'recompose';
+import { createEventHandler, componentFromStream } from 'recompose';
+import I from 'immutable';
 import { ModFileViewer } from './lib/ModFileViewer';
 import './App.css';
 
-setObservableConfig(mostConfig)
+// use most.js streams to store state.
+import mostConfig from 'recompose/mostObservableConfig';
+setObservableConfig(mostConfig);
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <ModFileViewer />
-      </div>
-    );
-  }
-}
+const INITIAL_PLOT = I.fromJS({
+  number: 1
+});
+
+const App = componentFromStream(() => {
+  const { handler, stream: plot$ } = createEventHandler();
+  return plot$.startWith(INITIAL_PLOT).map((plot) =>
+    <div className="App">
+      <ModFileViewer plot={plot} setPlotState={handler} />
+    </div>
+  );
+})
 
 export default App;
