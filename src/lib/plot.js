@@ -7,15 +7,22 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
         super(props);
         this.refs = {};
       }
+      arguments() {
+        return {
+          props: this.props,
+          state: this.state, // NOTE: please don't use this argument
+          refs: this.refs
+        };
+      }
       componentDidMount() {
         this.props.setRefs instanceof Function && this.props.setRefs(this.refs);
-        didMount instanceof Function && didMount(this.refs)
+        didMount instanceof Function && didMount.call(this);
       }
       componentDidUpdate() {
-        didUpdate instanceof Function && didUpdate(this.refs)
+        didUpdate instanceof Function && didUpdate.call(this);
       }
       componentWillUnmount() {
-        willUnmount instanceof Function && willUnmount(this.refs)
+        willUnmount instanceof Function && willUnmount.call(this);
       }
       render() {
         const { setRefs, ...restProps } = this.props;
@@ -30,7 +37,7 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
   };
 }
 
-export const createPlotElements = ({ setRefs }) =>
+export const Plot = ({ setRefs }) =>
   <div ref={container => setRefs({ container })}>
     <svg ref={svg => setRefs({ svg })}></svg>
     <canvas ref={canvas => setRefs({ canvas })}></canvas>
