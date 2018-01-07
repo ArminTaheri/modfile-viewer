@@ -7,13 +7,6 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
         super(props);
         this.refs = {};
       }
-      arguments() {
-        return {
-          props: this.props,
-          state: this.state, // NOTE: please don't use this argument
-          refs: this.refs
-        };
-      }
       componentDidMount() {
         this.props.setRefs instanceof Function && this.props.setRefs(this.refs);
         didMount instanceof Function && didMount.call(this);

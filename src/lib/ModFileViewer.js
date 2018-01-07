@@ -7,8 +7,12 @@ const fetchData = lifecycle({
   componentDidMount() {
     const { plot, setPlotState } = this.props;
     plot.get('promisedData').promise.then(plotData => {
-      setTimeout(() => setPlotState(plot.set('data', plotData)), 1000); // fake loading time
+      plotData && setPlotState(plot.set('data', plotData)); // fake loading time
     });
+  },
+  componentWillUnmount() {
+    const { plot } = this.props;
+    plot.get('promisedData').cancel();
   }
 });
 
