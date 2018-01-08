@@ -6,11 +6,11 @@
 .cell-grid-row {
   display: flex;
   flex-direction: row;
-  min-height: 200px;
+  min-height: 120px;
 }
 
 .cell-grid-column {
   display: flex;
   flex-direction: column;
-  min-width: 250px;
+  min-width: 200px;
 }

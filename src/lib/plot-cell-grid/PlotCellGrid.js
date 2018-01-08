@@ -1,10 +1,7 @@
-import React  from 'react';
+import React, { PureComponent }  from 'react';
 import './PlotCellGrid.css';
 
-export const PlotCellGrid = ({ children }) => {
-  const headModel =
-    <canvas></canvas>
-  ;
+export const PlotCellGrid = ({ headModel, children }) => {
   const inputsStyle = {
     display: 'flex',
     flexDirection: 'column',
@@ -30,19 +27,28 @@ export const PlotCellGrid = ({ children }) => {
       </div>
     </div>
   ;
-  const Cl = ({ children }) =>
-    <div className="cell-grid-column">{children}</div>
-  ;
-  const Rw = ({ children }) =>
-    <div className="cell-grid-row">{children}</div>
-  ;
+  const layout = [
+    [frequency, children[0], children[1], children[2]],
+    [children[3], children[4], children[5], children[6], children[7]],
+    [headModel, children[8], children[9], children[10]],
+    [children[11], children[12], children[13], children[14], children[15]],
+    [stats, children[16], children[17], children[18]]
+  ];
   return (
     <div className="cell-grid-container">
-      <Cl><Rw>{frequency}</Rw><Rw>{children[0]}</Rw><Rw>{children[1]}</Rw><Rw>{children[2]}</Rw></Cl>
-      <Cl><Rw>{children[3]}</Rw><Rw>{children[4]}</Rw><Rw>{children[5]}</Rw><Rw>{children[6]}</Rw></Cl>
-      <Cl><Rw>{headModel}</Rw><Rw>{children[7]}</Rw><Rw>{children[8]}</Rw><Rw>{children[9]}</Rw></Cl>
-      <Cl><Rw>{children[10]}</Rw><Rw>{children[11]}</Rw><Rw>{children[12]}</Rw><Rw>{children[13]}</Rw></Cl>
-      <Cl><Rw>{stats}</Rw><Rw>{children[14]}</Rw><Rw>{children[15]}</Rw><Rw>{children[16]}</Rw></Cl>
+      {
+        layout.map((col, i) =>
+          <div key={`col-${i}`} className="cell-grid-column">
+            {
+              col.map((cell, j) =>
+                <div key={`cell-${i}-${j}`} className="cell-grid-row">
+                  {cell}
+                </div>
+              )
+           }
+          </div>
+        )
+      }
     </div>
   );
 }

@@ -5,7 +5,7 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
     return class Enhanced extends Component {
       constructor(props) {
         super(props);
-        this.refs = {};
+        this.nodeRefs = {};
       }
       componentDidMount() {
         this.props.setRefs instanceof Function && this.props.setRefs(this.refs);
@@ -19,9 +19,15 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
       }
       render() {
         const { setRefs, ...restProps } = this.props;
+        const propagateRefs = refs => {
+          Object.assign(this.nodeRefs, refs);
+          if (this.props.setRefs instanceof Function) {
+            this.props.setRefs(this.nodeRefs);
+          }
+        }
         return (
           <WrappedComponent
-            setRefs={refs => { Object.assign(this.refs, refs); }}
+            setRefs={propagateRefs}
             {...restProps}
           />
         );
