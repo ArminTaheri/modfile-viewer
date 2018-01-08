@@ -1,0 +1,16 @@
+.cell-grid-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.cell-grid-row {
+  display: flex;
+  flex-direction: row;
+  min-height: 200px;
+}
+
+.cell-grid-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+}

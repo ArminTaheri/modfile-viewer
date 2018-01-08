@@ -29,6 +29,8 @@
     "fs-extra": "3.0.1",
     "html-webpack-plugin": "2.29.0",
     "immutable": "^3.8.2",
+    "immutablediff": "^0.4.4",
+    "immutablepatch": "^0.4.2",
     "jest": "20.0.4",
     "most": "^1.7.2",
     "object-assign": "4.1.1",
@@ -98,6 +100,7 @@
     "extends": "react-app"
   },
   "devDependencies": {
-    "react": "^16.2.0"
+    "react": "^16.2.0",
+    "resize-observer-polyfill": "^1.5.0"
   }
 }

@@ -2,7 +2,8 @@ import React from 'react';
 import { setObservableConfig,  } from 'recompose';
 import { createEventHandler, componentFromStream } from 'recompose';
 import I from 'immutable';
-import axios, { CancelToken } from 'axios';
+import axios from 'axios';
+import { fromPromise } from 'most';
 import { PlotData } from './lib/PlotData';
 import { ModFileViewer } from './lib/ModFileViewer';
 import './App.css';
@@ -13,26 +14,22 @@ setObservableConfig(mostConfig);
 
 
 function fetchModFile(url) {
-  let cancel;
-  const promise = axios({
+  return axios({
     url,
     method: 'get',
     responseType: 'text',
-    cancelToken: new CancelToken(canceler => { cancel = canceler; })
   })
   .then(res => new PlotData().loadFrom(res.data))
   .catch(err => console.warn(err));
-  return { promise, cancel };
 }
 
 const DEFAULT_PLOT = I.Map()
-  .setIn(['axis', 'orientations'], I.List())
-  .updateIn(['axis', 'orientations'], orientations =>
+  .set('axes', I.List())
+  .update('axes', orientations =>
     orientations
-      .push('bottom')
-      .push('left')
+      .push(I.fromJS({ orientation: 'bottom' }))
+      .push(I.fromJS({ orientation: 'left', units: 'Db' }))
   )
-  .set('dimensions', I.fromJS({ height: 50 }))
   .set('categoryIntervals', I.fromJS({
     // TODO: Compute from file metadata
     'A': [0, 10],
@@ -40,17 +37,24 @@ const DEFAULT_PLOT = I.Map()
     'C': [35, 40],
     'D': [40, 50]
   }))
-  .set('promisedData', fetchModFile('static/data/fakemodfile.mod'))
-
-
 
 const App = componentFromStream(() => {
-  const { handler, stream: plot$ } = createEventHandler();
-  return plot$
-    .startWith(DEFAULT_PLOT)
-    .map((plot) =>
-      <div className="App">
-        <ModFileViewer plot={plot} setPlotState={handler} />
+  const { handler, stream: plots$ } = createEventHandler();
+  const plots = [];
+  for (let i = 0; i < 18; i++) {
+    plots.push(DEFAULT_PLOT);
+  }
+  const fetched = fromPromise(
+    Promise.all(plots.map(() => fetchModFile('static/data/fakemodfile.mod')))
+  );
+  const addDataArrayToPlots = (plots, dataArray) =>
+    dataArray.reduce((plots, data, i) => plots.setIn([i, 'data'], data), plots);
+  return plots$
+    .startWith(I.List(plots))
+    .combine(addDataArrayToPlots, fetched)
+    .map(plots =>
+      <div>
+        <ModFileViewer plots={plots} setPlotsState={handler} />
       </div>
     );
 })

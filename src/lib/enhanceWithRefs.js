@@ -29,9 +29,3 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
     }
   };
 }
-
-export const Plot = ({ setRefs }) =>
-  <div ref={container => setRefs({ container })}>
-    <svg ref={svg => setRefs({ svg })}></svg>
-    <canvas ref={canvas => setRefs({ canvas })}></canvas>
-  </div>
