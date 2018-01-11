@@ -12,6 +12,7 @@ export const enhanceWithRefs = ({ didMount, didUpdate, willUnmount }) => {
         didMount instanceof Function && didMount.call(this);
       }
       componentDidUpdate() {
+        this.updatePlot instanceof Function && this.updatePlot();
         didUpdate instanceof Function && didUpdate.call(this);
       }
       componentWillUnmount() {

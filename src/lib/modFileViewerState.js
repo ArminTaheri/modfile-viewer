@@ -42,7 +42,7 @@ function createPlotData(modData) {
           .addTrace(traces[i]);
         dataArray.push(data);
       });
-      return { type, dataArray };
+      return { type, dataArray, frequencyStep: stepSize, /* correlation */ };
     }
     default:
       return { type, dataArray: [] }
@@ -83,10 +83,10 @@ const DEFAULT_FREQ_PLOT = I.Map()
 export function createViewerStateStream(url) {
   const { handler: setter, stream: state$ } = createEventHandler();
   const mergeFetchedToState = (state, fetchedData) => {
-    const { dataArray, correlation } = fetchedData;
+    const { dataArray, frequencyStep, correlation } = fetchedData;
     return dataArray.reduce(
       (state, data, i) => state.setIn(['plots', i], DEFAULT_FREQ_PLOT.set('data', data)),
-      state.set('correlation', correlation)
+      state.merge(I.Map({ correlation, frequencyStep }))
     );
   };
   const initialState = I.Map({ plots: I.List() });
