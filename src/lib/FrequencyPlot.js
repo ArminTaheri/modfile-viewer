@@ -86,8 +86,17 @@ const cursorClick = withHandlers({
 })
 
 // Drawing enhancers:
+const statusText = enhanceWithRefs({
+  didMount() {
+
+  },
+  didUpdate() {
+
+  }
+})
 const cursor = enhanceWithRefs({
   didMount() {
+    console.log(11);
     const { plot } = this.props;
     const  { graphArea, container } = this.nodeRefs;
     const rect = container.getBoundingClientRect();
@@ -126,17 +135,24 @@ const axisBottom = enhanceWithRefs({
       const { plot } = this.props;
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
-      const { xScale } = getScales(plot.get('data').extent, dims);
       if (axis) {
         axis.remove();
         axis = null;
       }
       // If any plot axes has a 'bottom' orientation, draw the axis.
       if (plot.get('axes').map(a => a.get('orientation')).includes('bottom')) {
-        const axisFunc = d3.axisBottom(xScale).ticks(1);
+        axis =
+          d3.select(this.nodeRefs.svg)
+            .append('g')
+            .attr('transform', `translate(${dims.left}, ${dims.height + dims.top})`)
+        ;
+        let tickValues = []
+        const extent = JSON.parse(JSON.stringify(plot.get('data').extent));
+        let xScale = getScales(extent, dims).xScale;
+        let axisFunc = d3.axisBottom(xScale).ticks(5);
         if (plot.has('categoryIntervals')) {
           const catIvls = plot.get('categoryIntervals').toJS();
-          const tickValues = Object.keys(catIvls)
+          tickValues = Object.keys(catIvls)
             .map(key => catIvls[key])
             .reduce((a,b) => a.concat(b), [])
             .reduce((a, b) => {
@@ -146,17 +162,12 @@ const axisBottom = enhanceWithRefs({
               return a.concat([b]);
             }, [])
           ;
+          extent.x[0] = tickValues[0] || extent.x[0];
+          extent.x[1] = tickValues[tickValues.length - 1] || extent.x[1];
+          xScale = getScales(extent, dims).xScale;
+          axisFunc = d3.axisBottom(xScale).ticks(1);
           axisFunc.tickValues(tickValues);
           axisFunc.tickFormat(() => '');
-        }
-        axis =
-          d3.select(this.nodeRefs.svg)
-            .append('g')
-            .attr('transform', `translate(${dims.left}, ${dims.height + dims.top})`)
-            .call(axisFunc)
-        ;
-        if (plot.has('categoryIntervals')) {
-          const catIvls = plot.get('categoryIntervals').toJS();
           Object.keys(catIvls).forEach(key => {
             const ivl = catIvls[key];
             axis
@@ -168,6 +179,7 @@ const axisBottom = enhanceWithRefs({
             ;
           });
         }
+        axis.call(axisFunc);
       }
     }
     this.updatePlot();
@@ -278,6 +290,7 @@ export const FrequencyPlot = compose(
   cursorClick,
   // enhanceWithRefs() needs to be applied together to pass react refs between each other.
   updateOnResize,
+  statusText,
   cursor,
   curves,
   axisLeft,
