@@ -1,7 +1,7 @@
 import React from 'react';
 import { setObservableConfig, componentFromStream } from 'recompose';
-import { createViewerStateStream } from './lib/modFileViewerState';
-import { ModFileViewer } from './lib/ModFileViewer';
+import { loadViewerStateStream } from './lib/state/modFileViewerState';
+import { TabbedViews } from './lib/tabbed-views/TabbedViews';
 import './App.css';
 
 // use most.js streams to store state.
@@ -11,11 +11,11 @@ setObservableConfig(mostConfig);
 window.fileURL = window.fileURL || 'static/data/AVE-CROSS-A-0.MOD';
 
 const App = componentFromStream(() => {
-  const { setter, state$ } = createViewerStateStream(window.fileURL);
+  const { setter, state$ } = loadViewerStateStream(window.fileURL);
   return state$
     .map(state =>
       <div>
-        <ModFileViewer state={state} setter={setter} />
+        <TabbedViews state={state} setter={setter} />
       </div>
     );
 })

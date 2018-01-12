@@ -4,14 +4,15 @@ import PropTypes from 'prop-types';
 import ImmutableTypes from 'react-immutable-proptypes';
 import { withHandlers, setPropTypes, renderComponent, compose, branch } from 'recompose';
 import * as d3 from 'd3';
-import { enhanceWithRefs } from './enhanceWithRefs';
-import { Plot } from './Plot';
-import { FreqPlotData } from './PlotData';
+import { enhanceWithRefs, Plot } from './Plot';
+import { FreqPlotData } from '../state/PlotData';
+
+// TODO: Rewrite to follow same code style as plot/CorrelationPlot.js
 
 const setPlotPropTypes = setPropTypes({
   cursorFreq: PropTypes.number,
   setCursorFreq: PropTypes.func,
-  plot: ImmutableTypes.contains({
+  plotState: ImmutableTypes.contains({
     axes: ImmutableTypes.listOf(
       ImmutableTypes.contains({
         orientation: PropTypes.string,
@@ -23,12 +24,12 @@ const setPlotPropTypes = setPropTypes({
       PropTypes.string,
     ),
     data: PropTypes.instanceOf(FreqPlotData),
-  }).isRequired,
+  }),
   setPlotState: PropTypes.func.isRequired
 })
 
-const Loading = () => <div>Loading...</div>
-const showLoading = branch(({ plot }) => !plot.has('data'), renderComponent(Loading))
+const Loading = () => <div>No data currently set.</div>
+const showLoading = branch(({ plotState }) => !plotState.has('data'), renderComponent(Loading))
 
 const getScales = (extent, { top, left, width, height }) => {
   const xScale = d3.scaleLinear()
@@ -58,13 +59,13 @@ const getPlotDimensions = (rect) => ({
   height: rect.height - PADDING.bottom
 });
 
-const cursorClickHandler = ({ plot, setCursorFreq }, event) => {
+const cursorClickHandler = ({ plotState, setCursorFreq }, event) => {
   if (!(event.button === 0 && event.buttons > 0)) {
     return;
   }
   const rect = event.currentTarget.getBoundingClientRect();
   const dims = getPlotDimensions(rect);
-  const { extent } = plot.get('data');
+  const { extent } = plotState.get('data');
   const { xInvScale } = getScales(extent, dims);
   const mouseX = event.clientX - rect.left - dims.left;
   if (mouseX < 0 || mouseX > dims.width) {
@@ -88,7 +89,7 @@ const cursorClick = withHandlers({
 // Drawing enhancers:
 const statusText = enhanceWithRefs({
   didMount() {
-    const  { plot } = this.props;
+    const  { plotState } = this.props;
     const  { svg } = this.nodeRefs;
     const rect = svg.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
@@ -98,7 +99,7 @@ const statusText = enhanceWithRefs({
       .style('font-size', '11px')
       .attr('fill', 'black')
       .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 15})`)
-      .text(plot.get('data').label)
+      .text(plotState.get('data').label)
     ;
     const cursorValText = d3.select(svg)
       .append('g')
@@ -108,10 +109,17 @@ const statusText = enhanceWithRefs({
       .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 30})`)
     ;
     this.updatePlot = () => {
-      const  { plot, cursorFreq } = this.props;
-      const { domain, traces } = plot.get('data');
+      const  { plotState, cursorFreq } = this.props;
+      const { domain, traces } = plotState.get('data');
+      if (!(domain && domain.length)) {
+        return;
+      }
       domain.forEach((freq, i) => {
-        if (cursorFreq >= freq && (domain[i + 1] !== undefined && cursorFreq < domain[i + 1])) {
+        if (cursorFreq &&
+            cursorFreq >= freq &&
+            domain[i + 2] !== undefined &&
+            cursorFreq < domain[i + 1]
+        ) {
           const rounded = Math.round(traces[0][i] * 1000) / 1000
           cursorValText.text(traces[0] !== undefined ? rounded : '')
         }
@@ -122,11 +130,11 @@ const statusText = enhanceWithRefs({
 })
 const cursor = enhanceWithRefs({
   didMount() {
-    const { plot } = this.props;
+    const { plotState } = this.props;
     const  { graphArea, container } = this.nodeRefs;
     const rect = container.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
-    const { extent } = plot.get('data');
+    const { extent } = plotState.get('data');
     const { xScale, yScale } = getScales(extent, dims);
     let cursor;
     this.updatePlot = () => {
@@ -154,7 +162,7 @@ const axisBottom = enhanceWithRefs({
   didMount() {
     let axis = null;
     this.updatePlot = () => {
-      const { plot } = this.props;
+      const { plotState } = this.props;
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
       if (axis) {
@@ -162,18 +170,18 @@ const axisBottom = enhanceWithRefs({
         axis = null;
       }
       // If any plot axes has a 'bottom' orientation, draw the axis.
-      if (plot.get('axes').map(a => a.get('orientation')).includes('bottom')) {
+      if (plotState.get('axes').map(a => a.get('orientation')).includes('bottom')) {
         axis =
           d3.select(this.nodeRefs.svg)
             .append('g')
             .attr('transform', `translate(${dims.left}, ${dims.height + dims.top})`)
         ;
         let tickValues = []
-        const extent = JSON.parse(JSON.stringify(plot.get('data').extent));
+        const extent = JSON.parse(JSON.stringify(plotState.get('data').extent));
         let xScale = getScales(extent, dims).xScale;
         let axisFunc = d3.axisBottom(xScale).ticks(5);
-        if (plot.has('categoryIntervals')) {
-          const catIvls = plot.get('categoryIntervals').toJS();
+        if (plotState.has('categoryIntervals')) {
+          const catIvls = plotState.get('categoryIntervals').toJS();
           tickValues = Object.keys(catIvls)
             .map(key => catIvls[key])
             .reduce((a,b) => a.concat(b), [])
@@ -212,16 +220,16 @@ const axisLeft = enhanceWithRefs({
   didMount() {
     let axis = null;
     this.updatePlot = () => {
-      const { plot } = this.props;
+      const { plotState } = this.props;
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
-      const { yScale } = getScales(plot.get('data').extent, dims);
+      const { yScale } = getScales(plotState.get('data').extent, dims);
       if (axis) {
         axis.remove();
         axis = null;
       }
       // If any plot axes has a 'left' orientation, draw the axis.
-      if (plot.get('axes').map(a => a.get('orientation')).includes('left')) {
+      if (plotState.get('axes').map(a => a.get('orientation')).includes('left')) {
         const axisFunc = d3.axisLeft(yScale).ticks(5);
         axis =
           d3.select(this.nodeRefs.svg)
@@ -238,12 +246,12 @@ const axisLeft = enhanceWithRefs({
 
 const curves = enhanceWithRefs({
   didMount() {
-    const { plot, setRefs } = this.props;
-    const data = plot.get('data');
+    const { plotState, setRefs } = this.props;
+    const data = plotState.get('data');
     const indices = data.domain.map((_, i) => i);
     const rect = this.nodeRefs.container.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
-    const { xScale, yScale } = getScales(plot.get('data').extent, dims);
+    const { xScale, yScale } = getScales(plotState.get('data').extent, dims);
     const lines = data.traces.map(trace => {
       const line =
         d3.line()
@@ -291,7 +299,7 @@ const updateOnResize = enhanceWithRefs({
   }
 })
 
-const SVGPlot = ({ cursorFreq, setCursorFreq, setPlotState, ...props }) =>
+const SVGPlot = ({ plotState, cursorFreq, setCursorFreq, setPlotState, ...props }) =>
   <Plot {...props}>
     <svg />
   </Plot>

@@ -1,16 +1,20 @@
 .cell-grid-container {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 }
 
 .cell-grid-row {
   display: flex;
   flex-direction: row;
-  min-height: 120px;
+  height: 120px;
 }
 
 .cell-grid-column {
   display: flex;
   flex-direction: column;
-  min-width: 200px;
+  width: 200px;
+}
+
+.freq-numeric-input {
+  width: 175px
 }

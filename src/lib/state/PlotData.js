@@ -14,8 +14,8 @@ export class FreqPlotData {
     };
   }
   addTrace(buffer) {
-    const bufmin = buffer.reduce((x, y) => Math.min(x,y), Infinity);
-    const bufmax = buffer.reduce((x, y) => Math.max(x,y), -Infinity);
+    const bufmin = buffer.reduce((x, y) => Math.min(x, y), Infinity);
+    const bufmax = buffer.reduce((x, y) => Math.max(x, y), -Infinity);
     if (this.traces.length === 0) {
       this.extent.y = [bufmin, bufmax];
     } else {
@@ -28,7 +28,8 @@ export class FreqPlotData {
 }
 
 export class CorrelationPlotData {
-  constructor() {
-    this.data = null;
+  constructor(label) {
+    this.label = label;
+    this.intensityBuffer = new Float32Array(1);
   }
 }

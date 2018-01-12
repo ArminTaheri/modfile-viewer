@@ -1,0 +1,13 @@
+.modfile-viewer-input {
+  display: flex;
+  flex-direction: column;
+  border-style: solid;
+  height: 55px;
+  border-width: 1px;
+}
+
+.modfile-viewer-plot {
+  display: 'flex';
+  min-width: '100%';
+  min-height: '100%';
+}

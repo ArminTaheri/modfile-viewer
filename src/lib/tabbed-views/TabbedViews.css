@@ -1,0 +1,18 @@
+.tabs-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.tab-container {
+  cursor: pointer;
+  user-select: none;
+  padding: 10px 10px;
+  border-style: solid;
+  border-width: 1px;
+  background-color: #bbb;
+}
+
+.tab-container.--active {
+  border-bottom-style: none;
+  background-color: #fff;
+}
