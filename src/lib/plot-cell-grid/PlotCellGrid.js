@@ -69,12 +69,15 @@ export const PlotCellGrid = (props) => {
     statsInput &&
     <StatsInput stats={stats} setStats={setStats} />
   ;
+  // TODO: see layouts.js
+  // Each array is a column from left to right in the UI.
+  // Each array starts at the top of the screen.
   const layout = [
-    [renderedFrequencyInput, children[0], children[1], children[2]],
-    [children[3], children[4], children[5], children[6], children[7]],
-    [headModel, children[8], children[9], children[10]],
-    [children[11], children[12], children[13], children[14], children[15]],
-    [renderedStatsInput, children[16], children[17], children[18]]
+    [frequency   , children[0] , children[1] , children[2]] ,
+    [children[3] , children[4] , children[5] , children[6]  , children[7]],
+    [headModel   , children[8] , children[9] , children[10]],
+    [children[11], children[12], children[13], children[14] , children[15]],
+    [stats       , children[16], children[17], children[18]]
   ];
   return (
     <div className="cell-grid-container">

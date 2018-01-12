@@ -2,7 +2,7 @@ import { createEventHandler } from 'recompose';
 import I from 'immutable';
 import axios from 'axios';
 import { fromPromise } from 'most';
-import { FreqPlotData } from './PlotData';
+import { FreqPlotData } from './plot/PlotData';
 import { QeegModFileParser, QeegModFileInterpreter } from 'qeegmodfile';
 
 function parseModFile(buffer) {

@@ -1,8 +1,8 @@
 import React  from 'react';
 import I from 'immutable';
 import { PlotCellGrid } from './plot-cell-grid/PlotCellGrid';
-import { FrequencyPlot } from './FrequencyPlot'
-import { CorrelationPlot } from './CorrelationPlot'
+import { FrequencyPlot } from './plot/FrequencyPlot'
+import { CorrelationPlot } from './plot/CorrelationPlot'
 
 export const ModFileViewer = ({ setter, state }) => {
   const frequency = state.get('cursorFreq');

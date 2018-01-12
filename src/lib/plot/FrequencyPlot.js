@@ -88,15 +88,39 @@ const cursorClick = withHandlers({
 // Drawing enhancers:
 const statusText = enhanceWithRefs({
   didMount() {
-
-  },
-  didUpdate() {
-
+    const  { plot } = this.props;
+    const  { svg } = this.nodeRefs;
+    const rect = svg.getBoundingClientRect();
+    const dims = getPlotDimensions(rect);
+    d3.select(svg)
+      .append('g')
+      .append('text')
+      .style('font-size', '11px')
+      .attr('fill', 'black')
+      .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 15})`)
+      .text(plot.get('data').label)
+    ;
+    const cursorValText = d3.select(svg)
+      .append('g')
+      .append('text')
+      .style('font-size', '10px')
+      .attr('fill', 'black')
+      .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 30})`)
+    ;
+    this.updatePlot = () => {
+      const  { plot } = this.props;
+      let cursorIndex;
+      const { domain } = plot.get('data');
+      plot.get('data').domain.forEach((freq, i) => {
+        if ()
+      })
+      cursorValText.text('heyy')
+    };
+    this.updatePlot();
   }
 })
 const cursor = enhanceWithRefs({
   didMount() {
-    console.log(11);
     const { plot } = this.props;
     const  { graphArea, container } = this.nodeRefs;
     const rect = container.getBoundingClientRect();
@@ -122,9 +146,6 @@ const cursor = enhanceWithRefs({
       }
     };
     this.updatePlot();
-  },
-  didUpdate() {
-    this.updatePlot instanceof Function && this.updatePlot();
   }
 })
 
@@ -183,9 +204,6 @@ const axisBottom = enhanceWithRefs({
       }
     }
     this.updatePlot();
-  },
-  didUpdate() {
-    this.updatePlot instanceof Function && this.updatePlot();
   }
 })
 
@@ -214,9 +232,6 @@ const axisLeft = enhanceWithRefs({
       }
     }
     this.updatePlot();
-  },
-  didUpdate() {
-    this.updatePlot instanceof Function && this.updatePlot();
   }
 })
 
@@ -260,9 +275,6 @@ const curves = enhanceWithRefs({
       });
     };
     this.updatePlot();
-  },
-  didUpdate() {
-    this.updatePlot instanceof Function && this.updatePlot();
   }
 })
 
