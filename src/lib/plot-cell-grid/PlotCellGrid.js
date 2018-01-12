@@ -32,7 +32,7 @@ const StatsInput = ({ stats, setStats }) =>
         type="checkbox"
         checked={!!stats.mean}
         onChange={e => setStats({ mean: e.target.checked })}
-    />
+      />
     </div>
     <div>
       <label>Std. Dev: </label>
@@ -71,7 +71,7 @@ export const PlotCellGrid = (props) => {
   ;
   // TODO: see layouts.js
   // Each array is a column from left to right in the UI.
-  // Each array starts at the top of the screen.
+  // Each sub-array maps to cells starting from the top of the screen.
   const layout = [
     [frequency   , children[0] , children[1] , children[2]] ,
     [children[3] , children[4] , children[5] , children[6]  , children[7]],

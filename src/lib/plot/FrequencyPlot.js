@@ -5,7 +5,7 @@ import ImmutableTypes from 'react-immutable-proptypes';
 import { withHandlers, setPropTypes, renderComponent, compose, branch } from 'recompose';
 import * as d3 from 'd3';
 import { enhanceWithRefs } from './enhanceWithRefs';
-import { Plot } from './plot/Plot';
+import { Plot } from './Plot';
 import { FreqPlotData } from './PlotData';
 
 const setPlotPropTypes = setPropTypes({
@@ -62,7 +62,7 @@ const cursorClickHandler = ({ plot, setCursorFreq }, event) => {
   if (!(event.button === 0 && event.buttons > 0)) {
     return;
   }
-  const rect = event.target.getBoundingClientRect();
+  const rect = event.currentTarget.getBoundingClientRect();
   const dims = getPlotDimensions(rect);
   const { extent } = plot.get('data');
   const { xInvScale } = getScales(extent, dims);
@@ -108,13 +108,14 @@ const statusText = enhanceWithRefs({
       .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 30})`)
     ;
     this.updatePlot = () => {
-      const  { plot } = this.props;
-      let cursorIndex;
-      const { domain } = plot.get('data');
-      plot.get('data').domain.forEach((freq, i) => {
-        if ()
+      const  { plot, cursorFreq } = this.props;
+      const { domain, traces } = plot.get('data');
+      domain.forEach((freq, i) => {
+        if (cursorFreq >= freq && (domain[i + 1] !== undefined && cursorFreq < domain[i + 1])) {
+          const rounded = Math.round(traces[0][i] * 1000) / 1000
+          cursorValText.text(traces[0] !== undefined ? rounded : '')
+        }
       })
-      cursorValText.text('heyy')
     };
     this.updatePlot();
   }
