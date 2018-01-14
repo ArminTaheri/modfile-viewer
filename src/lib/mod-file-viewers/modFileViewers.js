@@ -5,7 +5,7 @@ import { PlotCellGrid } from '../plot-cell-grid/PlotCellGrid';
 import { listToScalpLayout, listToMatrixLayout } from '../plot-cell-grid/layouts';
 import { FrequencyPlot } from '../plot/FrequencyPlot'
 import { CorrelationPlot } from '../plot/CorrelationPlot'
-import { DEFAULT_COLOR_MAP } from '../state/Color'
+import { DEFAULT_COLOR_MAP } from '../modfile-parsing/Color'
 import './modFileViewers.css';
 
 const FrequencyInput = ({ cursorFreq, frequencyStep, setCursorFreq }) =>

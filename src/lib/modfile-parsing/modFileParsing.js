@@ -1,7 +1,5 @@
 import Promise from 'promise';
-import { createEventHandler } from 'recompose';
 import I from 'immutable';
-import { fromPromise } from 'most';
 import { QeegModFileParser, QeegModFileInterpreter } from 'qeegmodfile';
 import { FreqPlotData, CorrelationPlotData } from './PlotData';
 import { DEFAULT_COLOR_MAP } from './Color';
@@ -43,9 +41,9 @@ const DEFAULT_CORRELATION_STATE = I.Map()
  * Wrap the interpretted values into immutable data structures or data classes in state/PlotData.js.
  * Use the final structure as the applications new state.
  */
-function createPlotData(modData) {
+function createViewerState(modData) {
   if (!modData) {
-    return null;
+    return { type: null, filename: null};
   }
   const interp = new QeegModFileInterpreter(modData);
   const type = interp.getTypeCode();
@@ -91,11 +89,11 @@ function createPlotData(modData) {
       return { type }
     }
     default:
-      return { type: null, dataArray: [] }
+      return { type: null }
   }
 }
 
-function fetchModFile(url) {
+export function fetchModFile(url) {
   return fetch(url, {
     method: 'get',
     responseType: 'blob',
@@ -108,19 +106,6 @@ function fetchModFile(url) {
       resolve(this.result);
     }
   }))
-  .then(buffer => createPlotData(parseModFile(buffer)))
+  .then(buffer => createViewerState(parseModFile(buffer)))
   .catch(err => { console.error(err); alert(err); });
-}
-
-
-export function loadViewerStateStream(url) {
-  const { handler: setter, stream: state$ } = createEventHandler();
-  const initialState = I.Map({});
-  const fetched$ = fromPromise(fetchModFile(url));
-  return {
-    setter,
-    state$: state$
-      .startWith(initialState)
-      .combine((state, fetched) => state.merge(I.Map(fetched)), fetched$)
-  };
 }

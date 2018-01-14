@@ -34,7 +34,7 @@ export const TabbedViews = ({ state, setter }) => {
   if (!state.has('type')) {
     return <div>Loading...</div>;
   }
-  if (!state.get('type')) {
+  if (state.get('type') === null) {
     return (
       <div>
         The data cannot be opened with any type of vizualization.

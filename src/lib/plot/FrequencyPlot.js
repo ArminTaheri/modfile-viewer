@@ -4,8 +4,8 @@ import PropTypes from 'prop-types';
 import ImmutableTypes from 'react-immutable-proptypes';
 import { withHandlers, setPropTypes, renderComponent, compose, branch } from 'recompose';
 import * as d3 from 'd3';
+import { FreqPlotData } from '../modfile-parsing/PlotData';
 import { enhanceWithRefs, Plot } from './Plot';
-import { FreqPlotData } from '../state/PlotData';
 
 // TODO: Rewrite to follow same code style as plot/CorrelationPlot.js
 

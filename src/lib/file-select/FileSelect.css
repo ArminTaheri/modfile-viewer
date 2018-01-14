@@ -1,0 +1,7 @@
+.file-select-back-button {
+  cursor: pointer;
+  padding: 10px 10px;
+  margin: 10px 10px;
+  border-style: solid;
+  width: 35px;
+}

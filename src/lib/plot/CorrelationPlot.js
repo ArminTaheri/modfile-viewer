@@ -5,8 +5,8 @@ import { lifecycle, defaultProps, setPropTypes, renderComponent, compose, branch
 import * as d3 from 'd3';
 import ResizeObserver from 'resize-observer-polyfill';
 import { Plot } from './Plot';
-import { CorrelationPlotData } from '../state/PlotData';
-import { Color } from '../state/Color';
+import { Color } from '../modfile-parsing/Color';
+import { CorrelationPlotData } from '../modfile-parsing/PlotData';
 
 const setPlotPropTypes = setPropTypes({
   cursorFreq: PropTypes.number,
