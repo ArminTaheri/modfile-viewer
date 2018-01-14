@@ -2,7 +2,7 @@ import React  from 'react';
 import I from 'immutable';
 import NumericInput from 'react-numeric-input';
 import { PlotCellGrid } from '../plot-cell-grid/PlotCellGrid';
-import { listToScalpLayout } from '../plot-cell-grid/layouts';
+import { listToScalpLayout, listToMatrixLayout } from '../plot-cell-grid/layouts';
 import { FrequencyPlot } from '../plot/FrequencyPlot'
 import { CorrelationPlot } from '../plot/CorrelationPlot'
 import { DEFAULT_COLOR_MAP } from '../state/Color'
@@ -83,7 +83,6 @@ export const scalpPositionCorrelationLayout = props => children => {
 
 export const scalpPositionMultiFrequencyLayout = props => children => {
   const {
-    headModel,
     cursorFreq,
     frequencyStep,
     setCursorFreq,
@@ -95,9 +94,12 @@ export const scalpPositionMultiFrequencyLayout = props => children => {
       setCursorFreq={setCursorFreq}
     />
   ;
-  return listToScalpLayout(children, renderedFrequencyInput, headModel);
+  return listToScalpLayout(children, renderedFrequencyInput);
 }
 
+export const matrixCorrelationTotalsLayout = ({ totals }) => children =>
+  listToMatrixLayout(children, totals)
+;
 export const modFileViewers = ({ state, setter }) => {
   const cursorFreq = state.get('cursorFreq');
   const frequencyStep = state.get('frequencyStep');
@@ -124,6 +126,7 @@ export const modFileViewers = ({ state, setter }) => {
       <CorrelationPlot
         plotClass='modfile-viewer-plot'
         plotState={state.get('correlation')}
+        cursorFreq={cursorFreq}
         setCursorFreq={setCursorFreq}
         colorMap={colorMap}
       />
@@ -171,6 +174,32 @@ export const modFileViewers = ({ state, setter }) => {
       </PlotCellGrid>
     );
   }
+  const makeMatrixCorrelationPlotCellGrid = () => {
+    const plotElements = state.get('plots').map((plot, i) =>
+      <CorrelationPlot
+        key={i}
+        plotClass='modfile-viewer-plot'
+        plot={plot}
+        cursorFreq={cursorFreq}
+        setCursorFreq={setCursorFreq}
+        setPlotState={newPlot => setter(state.setIn(['plots', i], newPlot))}
+      />
+    );
+    const layoutProps = {
+      cursorFreq,
+      setCursorFreq,
+      frequencyStep,
+      stats,
+      setStats
+    };
+    return (
+      <PlotCellGrid
+        layout={matrixCorrelationTotalsLayout(layoutProps)}
+      >
+        {plotElements.toJS()}
+      </PlotCellGrid>
+    );
+  }
   const NB1020 = {
     name: 'Narrow Band 10/20',
     createViewer: () => makeFreqPlotCellGrid(true)
@@ -185,9 +214,7 @@ export const modFileViewers = ({ state, setter }) => {
   };
   const BBAND = {
     name: 'Broad Band',
-    createViewer: () => (
-      null
-    )
+    createViewer: () => makeMatrixCorrelationPlotCellGrid()
   };
   const CROSSMEASURES = {
     name: 'Cross Measures',
