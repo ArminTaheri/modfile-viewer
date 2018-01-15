@@ -55,6 +55,8 @@
     "whatwg-fetch": "2.0.3"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --env=jsdom"
@@ -102,6 +104,7 @@
     "extends": "react-app"
   },
   "devDependencies": {
+    "gh-pages": "^1.1.0",
     "react": "^16.2.0",
     "resize-observer-polyfill": "^1.5.0"
   }
