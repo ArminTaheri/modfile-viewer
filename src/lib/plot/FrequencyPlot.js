@@ -8,7 +8,6 @@ import { FreqPlotData } from '../modfile-parsing/PlotData';
 import { enhanceWithRefs, Plot } from './Plot';
 
 // TODO: Rewrite to follow same code style as plot/CorrelationPlot.js
-
 const setPlotPropTypes = setPropTypes({
   cursorFreq: PropTypes.number,
   setCursorFreq: PropTypes.func,

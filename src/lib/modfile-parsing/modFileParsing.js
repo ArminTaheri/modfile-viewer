@@ -48,17 +48,17 @@ function createViewerState(modData) {
   const interp = new QeegModFileInterpreter(modData);
   const type = interp.getTypeCode();
 
-  const extractDomainInfo = (stepDimension, labelDimension) => [
-    interp.getStartFrequency(),
-    interp.getFrequencyResolution(),
-    interp.getDimensionSizes()[stepDimension],
-    interp.getDimensionSizes()[labelDimension],
-    interp.getSpectrumLabels()[labelDimension],
-  ];
+  const extractDomainInfo = (stepDimension, labelDimension) => ({
+    startFreq: interp.getStartFrequency(),
+    stepSize: interp.getFrequencyResolution(),
+    steps: interp.getDimensionSizes()[stepDimension],
+    numLabels: interp.getDimensionSizes()[labelDimension],
+    labels: interp.getSpectrumLabels()[labelDimension]
+  });
   switch (type) {
     case 'ZCROSS':
     case 'CROSS': {
-      const [startFreq, stepSize, steps, numLabels, labels] = extractDomainInfo(1, 2);
+      const { startFreq, stepSize, steps, numLabels, labels } = extractDomainInfo(1, 2);
       const dataArray = [];
       const traces = new Array(numLabels).fill(true).map(() => new Float32Array(steps));
       labels.forEach((label, i) => {
@@ -82,11 +82,48 @@ function createViewerState(modData) {
       };
     }
     case 'COH': {
-      return { type }
+      const { startFreq, stepSize, steps, numLabels, labels } = extractDomainInfo(1, 2);
+      const dataArray = labels.map(label => new CorrelationPlotData('Coh ' + label));
+      const plotStates = dataArray.reduce(
+        (plotStates, data, i) => plotStates.set(i, DEFAULT_CORRELATION_STATE.set('data', data)),
+        I.List()
+      );
+      return {
+        type,
+        plotStates,
+        frequencyStep: stepSize,
+        colorMap: I.List(DEFAULT_COLOR_MAP)
+      };
     }
-    case 'ZBBSP':
     case 'BBSP': {
-      return { type }
+      const [dimSizes, dimLabels] = [
+        interp.getDimensionSizes(),
+        interp.getSpectrumLabels()
+      ];
+      const [measures, bands] = [dimSizes[0], dimSizes[1]];
+      const [mlabels, blabels] = [dimLabels[0], dimLabels[1]];
+      const dataArray = [];
+      // Generate Plot Labels ('AP Delta' ...)
+      for (let i = 0; i < measures; i++) {
+        for (let j = 0; j < bands; j++) {
+          const split = mlabels[i].split(' ');
+          const label = split
+            .map(word => word.length > 0 ? word[0] : '')
+            .concat(' ' + blabels[j])
+            .join('')
+          ;
+          dataArray.push(new CorrelationPlotData(label))
+        }
+      }
+      const plotStates = dataArray.reduce(
+        (plotStates, data, i) => plotStates.set(i, DEFAULT_CORRELATION_STATE.set('data', data)),
+        I.List()
+      );
+      return {
+        type,
+        plotStates,
+        colorMap: I.List(DEFAULT_COLOR_MAP)
+      }
     }
     default:
       return { type: null }

@@ -26,12 +26,10 @@ export const listToScalpLayout = (children, ...nullFillers) => {
 };
 
 // Consider using nested children to distinguish plots and totals.
-export const listToMatrixLayout = (children, totals) => {
+export const listToMatrixLayout = (width, children) => {
   let row = -1;
   return children.reduce((layout, child, i) => {
-    if (i % 5 === 4) {
-      layout[row].push(totals[row] || null);
-      row++;
+    if (i % width === 0) {
       layout.push([]);
       row++;
     }

@@ -49,8 +49,9 @@ export const scalpPositionFrequencyLayout = props => children => {
     frequencyStep,
     cursorFreq,
     setCursorFreq,
+    enableStats,
     stats,
-    setStats,
+    setStats
   } = props;
   const renderedFrequencyInput =
     <FrequencyInput
@@ -60,6 +61,7 @@ export const scalpPositionFrequencyLayout = props => children => {
     />
   ;
   const renderedStatsInput =
+    enableStats &&
     <StatsInput stats={stats} setStats={setStats} />
   ;
   return listToScalpLayout(children, renderedFrequencyInput, headModel, renderedStatsInput);
@@ -97,13 +99,14 @@ export const scalpPositionMultiFrequencyLayout = props => children => {
   return listToScalpLayout(children, renderedFrequencyInput);
 }
 
-export const matrixCorrelationTotalsLayout = ({ totals }) => children =>
-  listToMatrixLayout(children, totals)
+export const matrixCorrelationTotalsLayout = () => children =>
+  listToMatrixLayout(5, children)
 ;
+
 export const modFileViewers = ({ state, setter }) => {
   const cursorFreq = state.get('cursorFreq');
   const frequencyStep = state.get('frequencyStep');
-  const colorMap = state.get('colorMap') || DEFAULT_COLOR_MAP;
+  const colorMap = state.get('colorMap') || I.List(DEFAULT_COLOR_MAP);
   const setCursorFreq = freq =>
     setter(state.set('cursorFreq', frequencyStep * Math.round(freq / frequencyStep)))
   ;
@@ -132,31 +135,31 @@ export const modFileViewers = ({ state, setter }) => {
       />
     );
     const layoutProps = {
+      headModel,
       cursorFreq,
       frequencyStep,
       setCursorFreq,
+      enableStats,
       stats,
       setStats
     };
     return (
       <PlotCellGrid
-        nullFillers={[headModel]}
         layout={scalpPositionFrequencyLayout(layoutProps)}
-        enableStats={enableStats}
       >
         {plotElements.toJS()}
       </PlotCellGrid>
     );
   };
   const makeCorrelationPlotCellGrid = () => {
-    const plotElements = state.get('plots').map((plot, i) =>
+    const plotElements = state.get('plotStates').map((plotState, i) =>
       <CorrelationPlot
         key={i}
         plotClass='modfile-viewer-plot'
-        plot={plot}
-        cursorFreq={cursorFreq}
+        plotState={plotState}
         setCursorFreq={setCursorFreq}
-        setPlotState={newPlot => setter(state.setIn(['plots', i], newPlot))}
+        setPlotState={newPlot => setter(state.setIn(['plotState', i], newPlot))}
+        colorMap={colorMap}
       />
     );
     const layoutProps = {
@@ -175,26 +178,20 @@ export const modFileViewers = ({ state, setter }) => {
     );
   }
   const makeMatrixCorrelationPlotCellGrid = () => {
-    const plotElements = state.get('plots').map((plot, i) =>
+    const plotElements = state.get('plotStates').map((plotState, i) =>
       <CorrelationPlot
         key={i}
         plotClass='modfile-viewer-plot'
-        plot={plot}
+        plotState={plotState}
         cursorFreq={cursorFreq}
         setCursorFreq={setCursorFreq}
-        setPlotState={newPlot => setter(state.setIn(['plots', i], newPlot))}
+        setPlotState={newPlot => setter(state.setIn(['plotState', i], newPlot))}
+        colorMap={colorMap}
       />
     );
-    const layoutProps = {
-      cursorFreq,
-      setCursorFreq,
-      frequencyStep,
-      stats,
-      setStats
-    };
     return (
       <PlotCellGrid
-        layout={matrixCorrelationTotalsLayout(layoutProps)}
+        layout={matrixCorrelationTotalsLayout()}
       >
         {plotElements.toJS()}
       </PlotCellGrid>

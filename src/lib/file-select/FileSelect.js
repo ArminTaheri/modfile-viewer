@@ -11,10 +11,8 @@ setObservableConfig(mostConfig);
 
 const FILE_CHOICES = [
   'AVE-CROSS-A-0.MOD',
-  'AVE-ZCROSS-A-0.MOD',
   'AVE-COH-A-0.MOD',
   'AVE-BBSP-A-0.MOD',
-  'AVE-ZBBSP-A-0.MOD'
 ];
 
 export const FileSelect = componentFromStream(() => {
