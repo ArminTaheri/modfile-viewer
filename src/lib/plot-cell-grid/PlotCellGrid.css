@@ -6,7 +6,7 @@
 .cell-grid-row {
   display: flex;
   flex-direction: row;
-  height: 120px;
+  height: 150px;
 }
 
 .cell-grid-column {

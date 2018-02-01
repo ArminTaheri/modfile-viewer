@@ -1,6 +1,7 @@
 import React from 'react';
 import { setObservableConfig, createEventHandler, componentFromStream } from 'recompose';
 import I from 'immutable';
+import { of } from 'most';
 import { fetchModFile } from '../modfile-parsing/modFileParsing';
 import { TabbedViews } from '../tabbed-views/TabbedViews';
 import './FileSelect.css';
@@ -34,6 +35,7 @@ export const FileSelect = componentFromStream(() => {
   const { handler: setter, stream: state$ } = createEventHandler();
   return state$
     .merge(fetchedStates$)
+    .merge(of(fetchModFile(`static/data/${FILE_CHOICES[0]}`).then(state => I.Map(state).set('filename', FILE_CHOICES[0]))).await())
     .startWith(I.Map({}))
     .map(state => {
       if (!state.get('filename')) {

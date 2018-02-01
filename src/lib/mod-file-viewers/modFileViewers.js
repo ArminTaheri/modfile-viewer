@@ -104,12 +104,14 @@ export const matrixCorrelationTotalsLayout = () => children =>
 ;
 
 export const modFileViewers = ({ state, setter }) => {
-  const cursorFreq = state.get('cursorFreq');
+  const startFrequency = state.get('startFrequency');
   const frequencyStep = state.get('frequencyStep');
+  const cursorFreq = state.get('cursorFreq') || startFrequency;
   const colorMap = state.get('colorMap') || I.List(DEFAULT_COLOR_MAP);
-  const setCursorFreq = freq =>
-    setter(state.set('cursorFreq', frequencyStep * Math.round(freq / frequencyStep)))
-  ;
+  const setCursorFreq = freq => {
+    const boundedFreq = Math.max(frequencyStep * Math.round(freq / frequencyStep), startFrequency);
+    return setter(state.set('cursorFreq', boundedFreq));
+  };
   const stats = state.has('stats') && state.get('stats').toJS();
   const setStats = nextStats =>
     setter(state.update('stats', stats => stats ? stats.merge(I.Map(nextStats)) : I.Map(nextStats)))

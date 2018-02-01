@@ -16,7 +16,7 @@ function parseModFile(buffer) {
 }
 
 const transformation = {
-  CROSS: number => Math.log(number) / Math.log(Math.E),
+  CROSS: number => Math.log(Math.sqrt(number)) / Math.log(Math.E),
   ZCROSS: number => Math.log(number) / Math.log(Math.E)
 }
 
@@ -45,9 +45,9 @@ function createViewerState(modData) {
   if (!modData) {
     return { type: null, filename: null};
   }
-  const interp = new QeegModFileInterpreter(modData);
+  const interp = window.interp= new QeegModFileInterpreter(modData);
   const type = interp.getTypeCode();
-
+  const globalExtent = {};
   const extractDomainInfo = (stepDimension, labelDimension) => ({
     startFreq: interp.getStartFrequency(),
     stepSize: interp.getFrequencyResolution(),
@@ -59,14 +59,20 @@ function createViewerState(modData) {
     case 'ZCROSS':
     case 'CROSS': {
       const { startFreq, stepSize, steps, numLabels, labels } = extractDomainInfo(1, 2);
+      globalExtent.x = [0, stepSize * (steps + 2)];
+      globalExtent.y = [Infinity, -Infinity];
       const dataArray = [];
       const traces = new Array(numLabels).fill(true).map(() => new Float32Array(steps));
+      const correlations = new Array(steps).fill(true).map(() => new Float32Array(numLabels));
       labels.forEach((label, i) => {
         traces[i].forEach((_, j) => {
+          correlations[j][i] = transformation[type](interp.getSpectrum(0, j, i)[i]);
           traces[i][j] = transformation[type](interp.getSpectrum(0, j, i)[i]);
         });
         const data = new FreqPlotData(startFreq, stepSize, steps, label)
-          .addTrace(traces[i]);
+          .setExtent(globalExtent)
+          .addTrace(traces[i])
+        ;
         dataArray.push(data);
       });
       const plotStates = dataArray.reduce(
@@ -76,8 +82,9 @@ function createViewerState(modData) {
       return {
         type,
         plotStates,
+        startFrequency: startFreq,
         frequencyStep: stepSize,
-        correlation: DEFAULT_CORRELATION_STATE.set('data', new CorrelationPlotData('GP')),
+        correlation: DEFAULT_CORRELATION_STATE.set('data', new CorrelationPlotData(labels, correlations, startFreq, stepSize, 'GP')),
         colorMap: I.List(DEFAULT_COLOR_MAP)
       };
     }

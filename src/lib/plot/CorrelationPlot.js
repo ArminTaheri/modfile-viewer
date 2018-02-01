@@ -2,16 +2,17 @@ import React  from 'react';
 import PropTypes from 'prop-types';
 import ImmutableTypes from 'react-immutable-proptypes';
 import { lifecycle, mapProps, setPropTypes, renderComponent, compose, branch } from 'recompose';
-import * as d3 from 'd3';
-import ResizeObserver from 'resize-observer-polyfill';
 import { Plot } from './Plot';
-import { Color } from '../modfile-parsing/Color';
+import { ColorMap } from '../modfile-parsing/Color';
 import { CorrelationPlotData } from '../modfile-parsing/PlotData';
 
 const setPlotPropTypes = setPropTypes({
   cursorFreq: PropTypes.number,
   setCursorFreq: PropTypes.func.isRequired,
-  colorMap: ImmutableTypes.listOf(PropTypes.instanceOf(Color)),
+  colorMap: ImmutableTypes.listOf(PropTypes.shape({
+    t: PropTypes.number.isRequired,
+    color: PropTypes.string.isRequired
+  })).isRequired,
   plotState: ImmutableTypes.contains({
     data: PropTypes.instanceOf(CorrelationPlotData),
   })
@@ -55,72 +56,135 @@ function PlotD3Process(spec) {
 }
 
 const computeCanvasCircle = (width, height) => [
-  width / 2,
-  height / 2,
-  Math.min(Math.abs(width), Math.abs(height)) / 4
+  width / 3,
+  height / 3 + 15,
+  Math.min(Math.abs(width), Math.abs(height)) / 2.9
 ]
 
 const drawHead = new PlotD3Process({
-  init(plotContext, props) {
+  loop(plotContext, props) {
     const { canvas, ctx } = plotContext;
-    const { width, height } = canvas.getBoundingClientRect();
+    const { width, height } = canvas;
     const [x, y, r] = computeCanvasCircle(width, height);
     ctx.beginPath();
     ctx.arc(x, y, r, 0, 2 * Math.PI);
-    ctx.moveTo(x - 4, y - r); // haha it looks like a 3 'nose'
+    ctx.moveTo(x - 4, y - r);
     ctx.lineTo(x, y - r - 4);
     ctx.lineTo(x + 4, y - r);
     ctx.stroke();
-  },
-  loop(plotContext, props) {
   }
 })
 
 const drawColorMap = new PlotD3Process({
-  init(plotContext, props) {
+  loop(plotContext, props) {
     const { canvas, ctx } = plotContext;
-    const { width, height } = canvas.getBoundingClientRect();
+    const { width, height } = canvas;
     const [x, y, r] = computeCanvasCircle(width, height);
-    const x0 = x + 2 * r;
+    const x0 = x + r;
     const y0 = y - r;
+    const gradDimensions = { top: -5, left: 20, width: 15, height: 2 * r };
     ctx.beginPath();
-    const grad = ctx.createLinearGradient(0, 0, 0, height);
     const colormap = props.colorMap ? props.colorMap.toJS() : [];
-    colormap.forEach((color, i) => {
-      const t = (i + 1) / colormap.length;
-      grad.addColorStop(t, `rgb(${color.r * 254}, ${color.g * 254}, ${color.b * 254})`);
+    const grad = ctx.createLinearGradient(
+      x0 + gradDimensions.left, //x0
+      y0 + gradDimensions.top + gradDimensions.height,  //y0
+      x0 + gradDimensions.left, //x1
+      y0 + gradDimensions.top,  //y1
+    );
+    colormap.forEach((stop, i) => {
+      const t = (i + 0.5) / colormap.length;
+      grad.addColorStop(t, stop.color);
     });
     ctx.fillStyle = grad;
-    ctx.fillRect(x0, y0, 16, 70);
-    ctx.strokeRect(x0, y0, 16, 70);
+    ctx.fillRect(
+      x0 + gradDimensions.left, //x0
+      y0 + gradDimensions.top,  //y0
+      gradDimensions.width, //x1
+      gradDimensions.height //y1
+    );
+    ctx.strokeRect(
+      x0 + gradDimensions.left, //x0
+      y0 + gradDimensions.top,  //y0
+      gradDimensions.width, //x1
+      gradDimensions.height //y1
+    );
     ctx.stroke();
-  },
-  loop(plotContext, props) {
+    ctx.font="14px Arial";
+    ctx.fillStyle = '#000';
+    const data = props.plotState.get('data');
+    let text = `${Math.round(100 * data.extent[1]) / 100}`;
+    ctx.fillText(text,
+      x0 + gradDimensions.left + gradDimensions.width + 2,
+      y0 + gradDimensions.top + 15
+    );
+    text = `${Math.round(100 * data.extent[0]) / 100}`;
+    ctx.fillText(text,
+      x0 + gradDimensions.left + gradDimensions.width + 2,
+      y0 + gradDimensions.top + gradDimensions.height
+    );
+    text = `${data.units}`;
+    ctx.fillText(text,
+      x0 + gradDimensions.left,
+      y0 + gradDimensions.top + gradDimensions.height + 20
+    );
   }
 })
 
+const round = (n) => Math.round(n * 1000) / 1000;
 const drawLabel = new PlotD3Process({
-  init(plotContext, props) {
-    this.draw = props => {
-      const { canvas, ctx } = plotContext;
-      const { width, height } = canvas.getBoundingClientRect();
-      const [x, y, r] = computeCanvasCircle(width, height);
-      const x0 = x - 2.4 * r;
-      const y0 = y + 1.8 * r;
-      ctx.font="14px Arial";
-      const data = props.plotState.get('data');
-      ctx.fillStyle = '#000';
-      const text = `${data.label} ${props.cursorFreq ? props.cursorFreq + ' Hz' : ''}`;
-      ctx.fillText(text, x0, y0);
-      this.clearText = [x0 - 18, y0 - 18, ctx.measureText(text).width + 18, 20];
-    };
-    this.draw(props);
-  },
   loop(plotContext, props) {
     const { canvas, ctx } = plotContext;
-    const { width, height } = canvas.getBoundingClientRect();
-    ctx.clearRect(...this.clearText)
-    this.draw(props)
+    const { width, height } = canvas;
+    const [x, y, r] = computeCanvasCircle(width, height);
+    const x0 = x - r - 15;
+    const y0 = y + r + 20;
+    ctx.font="14px Arial";
+    const data = props.plotState.get('data');
+    ctx.fillStyle = '#000';
+    const text = `${data.label} ${props.cursorFreq ? round(props.cursorFreq) + ' Hz' : ''}`;
+    ctx.fillText(text, x0, y0);
+  }
+})
+
+const drawHeatmap = new PlotD3Process({
+  init(plotContext, props) {
+    const { canvas } = plotContext;
+    const { width, height } = canvas;
+    const [x, y, r] = computeCanvasCircle(width, height);
+    const hbox = this.hbox = {
+      left: x - r,
+      top: y - r,
+      width: Math.ceil(2 * r) + 1,
+      height: Math.ceil(2 * r) + 1
+    };
+    const dataBuffer = this.dataBuffer = new Uint32Array(hbox.width * hbox.height);
+    const drawBuffer = new Uint8ClampedArray(dataBuffer.buffer);
+    this.imageData = new ImageData(drawBuffer, hbox.width, hbox.height);
+    this.colorMap = new ColorMap(40, props.colorMap.toJS());
+  },
+  loop(plotContext, props) {
+    if (!props.cursorFreq) {
+      return;
+    }
+    const { canvas, ctx } = plotContext;
+    if (!this.frequency) {
+      this.frequency = props.cursorFreq;
+    } else if (this.frequency === props.cursorFreq) {
+      ctx.putImageData(this.imageData, this.hbox.left, this.hbox.top);
+      return;
+    }
+    const { width, height } = canvas;
+    const [x, y, r] = computeCanvasCircle(width, height);
+    this.frequency = props.cursorFreq;
+    const data = props.plotState.get('data');
+    this.dataBuffer.forEach((_, i) => {
+      let px = (this.hbox.left + (i % this.hbox.height) - x) / r;
+      let py = (this.hbox.top + (i / this.hbox.height) - y) / r;
+      if (px*px + py*py < 1.0) {
+        this.dataBuffer[i] = this.colorMap.interpolate(data.interpolate(6, this.frequency, [px, py]));
+      }
+    });
+    ctx.putImageData(this.imageData, this.hbox.left, this.hbox.top);
   }
 })
 
@@ -134,7 +198,8 @@ const createPlotRenderer = () => {
         canvas.width = width;
         canvas.height = height;
         plotContext.ctx = canvas.getContext('2d');
-        this.plotD3Process = drawHead
+        this.plotD3Process =drawHeatmap
+          .chain(drawHead)
           .chain(drawColorMap)
           .chain(drawLabel)
           .initialize(plotContext, this.props)
@@ -142,6 +207,9 @@ const createPlotRenderer = () => {
         ;
       },
       componentWillUpdate(nextProps) {
+        const { canvas, ctx } = plotContext;
+        const { width, height } = canvas;
+        ctx.clearRect(0, 0, width, height);
         this.plotD3Process.update(plotContext, nextProps);
       }
     }),

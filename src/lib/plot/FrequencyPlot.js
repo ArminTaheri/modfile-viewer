@@ -36,7 +36,7 @@ const getScales = (extent, { top, left, width, height }) => {
     .rangeRound([0, width])
   ;
   const yScale = d3.scaleLinear()
-    .domain([extent.y[0], extent.y[1]])
+    .domain([extent.y[0], extent.y[1] + 1])
     .rangeRound([height, 0])
   ;
   const xInvScale = d3.scaleLinear()
@@ -45,7 +45,7 @@ const getScales = (extent, { top, left, width, height }) => {
   ;
   const yInvScale = d3.scaleLinear()
     .domain([height, 0])
-    .range([extent.y[0], extent.y[1]])
+    .range([extent.y[0], extent.y[1] + 1])
   ;
   return { xScale, yScale, xInvScale, yInvScale };
 };

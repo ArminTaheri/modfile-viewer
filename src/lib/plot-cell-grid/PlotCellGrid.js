@@ -9,7 +9,7 @@ export const PlotCellGrid = (props) => {
   if (!layout) {
     return;
   }
-  // TODO: see layouts.js
+  // TODO: resize each cell with ResizeObserver
   // Each array is a column from left to right in the UI.
   // Each sub-array maps to cells starting from the top of the screen.
   return (
