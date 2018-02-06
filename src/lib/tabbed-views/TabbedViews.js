@@ -1,5 +1,6 @@
 import React from 'react';
 import { modFileViewers } from '../mod-file-viewers/modFileViewers';
+import { TomographyViewer } from '../tomography-viewer/TomographyViewer';
 import './TabbedViews.css';
 
 /* Possible viewer options:
@@ -55,7 +56,10 @@ export const TabbedViews = ({ state, setter }) => {
         setActiveIndex={setActiveIndex}
         viewers={viewers}
       />
-      {viewers[activeIndex].createViewer()}
+      <div className="tab-view-content">
+        {viewers[activeIndex].createViewer()}
+        {state.hasIn(['plotState', 'tomography']) ? <TomographyViewer state={state} setter={setter} /> : null}
+      </div>
     </div>
   );
 }

@@ -146,6 +146,7 @@ const drawLabel = new PlotD3Process({
   }
 })
 
+const COLOR_MAP_RESOLUTION = 50;
 const drawHeatmap = new PlotD3Process({
   init(plotContext, props) {
     const { canvas } = plotContext;
@@ -160,7 +161,7 @@ const drawHeatmap = new PlotD3Process({
     const dataBuffer = this.dataBuffer = new Uint32Array(hbox.width * hbox.height);
     const drawBuffer = new Uint8ClampedArray(dataBuffer.buffer);
     this.imageData = new ImageData(drawBuffer, hbox.width, hbox.height);
-    this.colorMap = new ColorMap(40, props.colorMap.toJS());
+    this.colorMap = new ColorMap(COLOR_MAP_RESOLUTION, props.colorMap.toJS());
   },
   loop(plotContext, props) {
     if (!props.cursorFreq) {

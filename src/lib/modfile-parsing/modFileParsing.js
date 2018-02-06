@@ -16,7 +16,7 @@ function parseModFile(buffer) {
 }
 
 const transformation = {
-  CROSS: number => Math.log(Math.sqrt(number)) / Math.log(Math.E),
+  CROSS: number => Math.log(number) / Math.log(Math.E),
   ZCROSS: number => Math.log(number) / Math.log(Math.E)
 }
 

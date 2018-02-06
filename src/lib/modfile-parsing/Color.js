@@ -21,8 +21,7 @@ export class ColorMap {
 
 export const DEFAULT_COLOR_MAP = [
   { t: 0.00, color: '#0000ff' },
-  { t: 0.25, color: '#ff00ff' },
-  { t: 0.50, color: '#ff0000' },
-  { t: 0.75, color: '#ffff00' },
+  { t: 0.50, color: '#ffffff' },
+  { t: 0.90, color: '#ffffff' },
   { t: 1.00, color: '#ffffff' },
 ];
