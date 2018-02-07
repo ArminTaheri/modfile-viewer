@@ -16,3 +16,8 @@
   border-bottom-style: none;
   background-color: #fff;
 }
+
+.tab-view-content-row {
+  display: flex;
+  flex-direction: row;
+}
