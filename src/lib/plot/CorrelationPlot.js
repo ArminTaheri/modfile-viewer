@@ -158,9 +158,9 @@ const drawHeatmap = new PlotD3Process({
       width: Math.ceil(2 * r) + 1,
       height: Math.ceil(2 * r) + 1
     };
-    const dataBuffer = this.dataBuffer = new Uint32Array(hbox.width * hbox.height);
-    const drawBuffer = new Uint8ClampedArray(dataBuffer.buffer);
-    this.imageData = new ImageData(drawBuffer, hbox.width, hbox.height);
+    this.dataBuffer = new Uint32Array(hbox.width * hbox.height);
+    this.drawBuffer = new Uint8ClampedArray(this.dataBuffer.buffer);
+    this.imageData = new ImageData(this.drawBuffer, hbox.width, hbox.height);
     this.colorMap = new ColorMap(COLOR_MAP_RESOLUTION, props.colorMap.toJS());
   },
   loop(plotContext, props) {
@@ -182,7 +182,11 @@ const drawHeatmap = new PlotD3Process({
       let px = (this.hbox.left + (i % this.hbox.height) - x) / r;
       let py = (this.hbox.top + (i / this.hbox.height) - y) / r;
       if (px*px + py*py < 1.0) {
-        this.dataBuffer[i] = this.colorMap.interpolate(data.interpolate(6, this.frequency, [px, py]));
+        const color = this.colorMap.interpolate(data.interpolate(6, this.frequency, [px, py]));
+        this.drawBuffer[i * 4 + 0] = color[0];
+        this.drawBuffer[i * 4 + 1] = color[1];
+        this.drawBuffer[i * 4 + 2] = color[2];
+        this.drawBuffer[i * 4 + 3] = color[3];
       }
     });
     ctx.putImageData(this.imageData, this.hbox.left, this.hbox.top);

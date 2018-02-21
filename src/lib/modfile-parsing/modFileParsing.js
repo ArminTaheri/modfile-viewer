@@ -4,7 +4,7 @@ import { QeegModFileParser, QeegModFileInterpreter } from 'qeegmodfile';
 import { FreqPlotData, CorrelationPlotData } from './PlotData';
 import { DEFAULT_COLOR_MAP } from './Color';
 
-function parseModFile(buffer) {
+export function parseModFile(buffer) {
   const parser = new QeegModFileParser();
   parser.setRawData(buffer);
   const parsed = parser.parse();
@@ -84,6 +84,7 @@ function createViewerState(modData) {
         plotStates,
         startFrequency: startFreq,
         frequencyStep: stepSize,
+        numFrequencies: steps,
         correlation: DEFAULT_CORRELATION_STATE.set('data', new CorrelationPlotData(labels, correlations, startFreq, stepSize, 'GP')),
         colorMap: I.List(DEFAULT_COLOR_MAP)
       };

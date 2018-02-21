@@ -12,15 +12,24 @@ export class ColorMap {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    this.map = new Uint32Array(imageData.data.buffer);
+    this.map = imageData.data;
   }
   interpolate(t) {
-    return this.map[Math.floor((t / 2 + 0.5) * this.resolution)];
+    const index = Math.floor((t / 2 + 0.5) * this.resolution);
+    return [
+      this.map[index * 4 + 0],
+      this.map[index * 4 + 1],
+      this.map[index * 4 + 2],
+      0xff
+    ];
   }
 }
 
 export const DEFAULT_COLOR_MAP = [
-  { t: 0.00, color: '#ff0000' }, // bottom
-  { t: 0.50, color: '#ffffff' },
-  { t: 1.00, color: '#0000ff' }, // top
+  { t: 0.00, color: '#0000ff' }, // bottom
+  { t: 0.20, color: '#00ffff' },
+  { t: 0.40, color: '#00ff00' },
+  { t: 0.60, color: '#00ff00' },
+  { t: 0.80, color: '#ffff00' },
+  { t: 1.00, color: '#ff0000' }, // top 
 ];
