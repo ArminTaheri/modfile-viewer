@@ -128,7 +128,7 @@ export const TabbedViews = ({
         <div className="tab-view-content">
           <div className="tab-view-content-row">
             {layouts[activeTabIndex].createViewer()}
-            {activeTomography ? tomographyViewer : null}
+            {activeTomography ? tomographyViewer : <div>'Loading...'</div>}
           </div>
         </div>
       </div>

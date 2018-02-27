@@ -88,6 +88,46 @@ export default class TomographyViewer extends Component {
     }
     this.viewer.redrawVolumes();
   }
+  drawColorMap(canvas) {
+    if (!canvas || !this.props.colorMap) {
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    ctx.clearRect(0, 0, width, height);
+    const pad = { top: 10, left: 10, bottom: 30, right: 30 };
+    const grad = ctx.createLinearGradient(
+      pad.left,
+      pad.top,
+      width - pad.right,
+      pad.top,
+    );
+    this.props.colorMap.forEach((stop, i) => {
+      const t = (i + 0.5) / this.props.colorMap.length;
+      grad.addColorStop(t, stop.color);
+    });
+    ctx.fillStyle = grad;
+    ctx.fillRect(
+      pad.left,
+      pad.top,
+      width - pad.right,
+      height - pad.bottom
+    );
+    ctx.strokeRect(
+      pad.left,
+      pad.top,
+      width - pad.right,
+      height - pad.bottom
+    );
+    ctx.stroke();
+    ctx.font="14px Arial";
+    ctx.fillStyle = '#000';
+    let text = `${Math.round(100 * this.props.tomography.min) / 100}`;
+    ctx.fillText(text, pad.left, pad.top + height - 15);
+    text = `${Math.round(100 * this.props.tomography.max) / 100}`;
+    ctx.fillText(text, width - pad.right - 20, pad.top + height - 15);
+    text = `${Math.round(100 * this.props.tomography.max) / 100}`;
+  }
   componentDidMount() {
     const component = this;
     this.viewer = window.BrainBrowser.VolumeViewer.start("tomography-viewer-container", function(viewer) {
@@ -182,11 +222,22 @@ export default class TomographyViewer extends Component {
     return this.colorMap.interpolate(t);
   }
   render() {
+    const colorMap =
+      <canvas
+        ref={canvas => { this.drawColorMap(canvas); }}
+        className="color-map-canvas"
+        height={50}
+        width={200}
+      />
+    ;
     return (
       <div id="tomography-viewer-container">
         <button onClick={() => { this.viewer.resetDisplays(); this.viewer.redrawVolumes(); }}>
           reset viewports
         </button>
+        <div>
+          { this.props.colorMap ? colorMap : null}
+        </div>
         { this.state.loaded ? null : <div>Loading...</div> }
       </div>
     )

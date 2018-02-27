@@ -14,7 +14,6 @@ export function parseModFile(buffer) {
 
 const transformation = {
   CROSS: number => Math.log(Math.abs(number)) / Math.log(Math.E),
-  ZCROSS: number => Math.log(Math.abs(number)) / Math.log(Math.E)
 }
 
 
@@ -63,8 +62,8 @@ export function extractModel(modData, fileName) {
         labels.forEach((label, i) => {
           traces[i].forEach((_, j) => {
             if (type === 'ZCROSS') {
-              correlations[j][i] = transformation[type](interpreter.getSpectrum(k, j, i)[0]);
-              traces[i][j] = transformation[type](interpreter.getSpectrum(k, j, i)[0]);
+              correlations[j][i] = interpreter.getSpectrum(k, j, i)[0];
+              traces[i][j] = interpreter.getSpectrum(k, j, i)[0];
             } else {
               correlations[j][i] = transformation[type](interpreter.getSpectrum(0, j, i)[i]);
               traces[i][j] = transformation[type](interpreter.getSpectrum(0, j, i)[i]);
