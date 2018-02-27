@@ -1,21 +1,19 @@
 import React  from 'react';
 import PropTypes from 'prop-types';
-import ImmutableTypes from 'react-immutable-proptypes';
 import { lifecycle, mapProps, setPropTypes, renderComponent, compose, branch } from 'recompose';
 import { Plot } from './Plot';
 import { ColorMap } from '../modfile-parsing/Color';
 import { CorrelationPlotData } from '../modfile-parsing/PlotData';
 
 const setPlotPropTypes = setPropTypes({
-  cursorFreq: PropTypes.number,
-  setCursorFreq: PropTypes.func.isRequired,
-  colorMap: ImmutableTypes.listOf(PropTypes.shape({
-    t: PropTypes.number.isRequired,
-    color: PropTypes.string.isRequired
-  })).isRequired,
-  plotState: ImmutableTypes.contains({
-    data: PropTypes.instanceOf(CorrelationPlotData),
-  })
+  frequency: PropTypes.number,
+  colorMap: PropTypes.arrayOf(
+    PropTypes.shape({
+      t: PropTypes.number.isRequired,
+      color: PropTypes.string.isRequired
+    }),
+  ),
+  plot: PropTypes.instanceOf(CorrelationPlotData)
 })
 
 const CanvasPlot = (props) =>
@@ -23,7 +21,7 @@ const CanvasPlot = (props) =>
 ;
 
 const Loading = () => <div>No data currently set.</div>
-const showLoading = branch(({ plotState }) => !plotState, renderComponent(Loading))
+const showLoading = branch(({ plot }) => !plot, renderComponent(Loading))
 
 // Monadic class for chaining d3 drawing programs on the Plot DOM elements.
 function PlotD3Process(spec) {
@@ -84,7 +82,7 @@ const drawColorMap = new PlotD3Process({
     const y0 = y - r;
     const gradDimensions = { top: -5, left: 20, width: 15, height: 2 * r };
     ctx.beginPath();
-    const colormap = props.colorMap ? props.colorMap.toJS() : [];
+    const colormap = props.colorMap  || [];
     const grad = ctx.createLinearGradient(
       x0 + gradDimensions.left, //x0
       y0 + gradDimensions.top + gradDimensions.height,  //y0
@@ -111,7 +109,7 @@ const drawColorMap = new PlotD3Process({
     ctx.stroke();
     ctx.font="14px Arial";
     ctx.fillStyle = '#000';
-    const data = props.plotState.get('data');
+    const data = props.plot;
     let text = `${Math.round(100 * data.extent[1]) / 100}`;
     ctx.fillText(text,
       x0 + gradDimensions.left + gradDimensions.width + 2,
@@ -139,9 +137,9 @@ const drawLabel = new PlotD3Process({
     const x0 = x - r - 15;
     const y0 = y + r + 20;
     ctx.font="14px Arial";
-    const data = props.plotState.get('data');
+    const data = props.plot;
     ctx.fillStyle = '#000';
-    const text = `${data.label} ${props.cursorFreq ? round(props.cursorFreq) + ' Hz' : ''}`;
+    const text = `${data.name || ''} ${props.frequency ? round(props.frequency) + ' Hz' : ''}`;
     ctx.fillText(text, x0, y0);
   }
 })
@@ -161,28 +159,18 @@ const drawHeatmap = new PlotD3Process({
     this.dataBuffer = new Uint32Array(hbox.width * hbox.height);
     this.drawBuffer = new Uint8ClampedArray(this.dataBuffer.buffer);
     this.imageData = new ImageData(this.drawBuffer, hbox.width, hbox.height);
-    this.colorMap = new ColorMap(COLOR_MAP_RESOLUTION, props.colorMap.toJS());
+    this.colorMap = new ColorMap(COLOR_MAP_RESOLUTION, props.colorMap || []);
   },
   loop(plotContext, props) {
-    if (!props.cursorFreq) {
-      return;
-    }
     const { canvas, ctx } = plotContext;
-    if (!this.frequency) {
-      this.frequency = props.cursorFreq;
-    } else if (this.frequency === props.cursorFreq) {
-      ctx.putImageData(this.imageData, this.hbox.left, this.hbox.top);
-      return;
-    }
     const { width, height } = canvas;
     const [x, y, r] = computeCanvasCircle(width, height);
-    this.frequency = props.cursorFreq;
-    const data = props.plotState.get('data');
+    const data = props.plot;
     this.dataBuffer.forEach((_, i) => {
       let px = (this.hbox.left + (i % this.hbox.height) - x) / r;
       let py = (this.hbox.top + (i / this.hbox.height) - y) / r;
       if (px*px + py*py < 1.0) {
-        const color = this.colorMap.interpolate(data.interpolate(6, this.frequency, [px, py]));
+        const color = this.colorMap.interpolate(data.interpolate(6, props.frequency || 0, [px, py]));
         this.drawBuffer[i * 4 + 0] = color[0];
         this.drawBuffer[i * 4 + 1] = color[1];
         this.drawBuffer[i * 4 + 2] = color[2];
@@ -203,7 +191,7 @@ const createPlotRenderer = () => {
         canvas.width = width;
         canvas.height = height;
         plotContext.ctx = canvas.getContext('2d');
-        this.plotD3Process =drawHeatmap
+        this.plotD3Process = drawHeatmap
           .chain(drawHead)
           .chain(drawColorMap)
           .chain(drawLabel)
@@ -215,7 +203,9 @@ const createPlotRenderer = () => {
         const { canvas, ctx } = plotContext;
         const { width, height } = canvas;
         ctx.clearRect(0, 0, width, height);
-        this.plotD3Process.update(plotContext, nextProps);
+        this.plotD3Process
+          .update(plotContext, nextProps)
+        ;
       }
     }),
     mapProps(() => ({ setRefs: refs => Object.assign(plotContext, refs) }))

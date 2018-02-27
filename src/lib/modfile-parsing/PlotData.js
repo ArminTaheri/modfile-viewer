@@ -1,11 +1,27 @@
 import Heap from 'collections/heap';
 
+const DEFAULT_FREQUENCY_PLOT_OPTIONS = {
+  axes: [
+    { orientation: 'bottom' },
+    { orientation: 'left' }
+  ],
+  categoryIntervals: {
+    'Delta': [0.5, 4],
+    'Theta': [4, 7.5],
+    'Alpha': [7.5, 12.5],
+    'Beta': [12.5, 20]
+  }
+}
+
 export class FreqPlotData {
   static extent = { x: [Infinity, -Infinity], y: [Infinity, -Infinity] }
-  constructor(startFreq, stepSize, steps, label) {
+  constructor(startFrequency, stepSize, steps, label, options=DEFAULT_FREQUENCY_PLOT_OPTIONS) {
+    this.startFrequency = startFrequency;
+    this.stepSize = stepSize;
+    this.steps = steps;
     this.label = label;
     this.domain = new Float32Array(steps);
-    let freq = startFreq;
+    let freq = startFrequency;
     this.domain.forEach((_, i) => {
       this.domain[i] = freq;
       freq += stepSize;
@@ -15,6 +31,7 @@ export class FreqPlotData {
       x: [0, this.domain[steps - 1]],
       y: [Infinity, -Infinity]
     };
+    this.options = options;
   }
   // Use an external reference as the extent of the plot.
   setExtent(extent) {
@@ -69,13 +86,13 @@ function distance(v1, v2) {
 
 
 export class CorrelationPlotData {
-  constructor(labels, correlations, startFreq, stepSize, label=null, units='uV^2/Hz') {
-    this.label = label;
+  constructor(electrodes, correlations, startFreq, stepSize, name='', units='uV^2/Hz') {
+    this.name = name;
+    this.electrodes = electrodes.map(l => l.replace(/ /g, ''));
     this.units = units;
-    this.labels = labels.map(l => l.replace(/ /g, ''));
-    this.labelIndices = this.labels.map((_, i) => i);
+    this.labelIndices = this.electrodes.map((_, i) => i);
     this.correlations = correlations;
-    this.weights = new Float32Array(this.labels.length);
+    this.weights = new Float32Array(this.electrodes.length);
     this.startFreq = startFreq;
     this.stepSize = stepSize;
     this.extent = [Infinity, -Infinity];
@@ -97,7 +114,7 @@ export class CorrelationPlotData {
   }
   interpolate(k, frequency, point) {
     for (let i = 0; i < this.weights.length; i++) {
-      this.weights[i] = 1 / distance(point, positions1020[this.labels[i]]);
+      this.weights[i] = 1 / distance(point, positions1020[this.electrodes[i]]);
     }
     let intensity = 0;
     let wsum = 0;
@@ -105,7 +122,10 @@ export class CorrelationPlotData {
     const clampedK = Math.min(k, this.weights.length);
     for (let i = 0; i < clampedK; i++) {
       const nearestIndex = indexHeap.pop();
-      const freqIndex = Math.floor(Math.max((frequency - this.startFreq)/ this.stepSize, 0));
+      let freqIndex = 0;
+      if (this.correlations.length > 1) {
+        freqIndex = Math.floor(Math.max((frequency - this.startFreq)/ this.stepSize, 0));
+      }
       if (freqIndex < 0 || freqIndex >= this.correlations.length) {
         continue;
       }

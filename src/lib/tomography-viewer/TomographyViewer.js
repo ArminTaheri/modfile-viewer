@@ -27,52 +27,59 @@ const getArrayOffset = (coord, header) => {
   );
 };
 
+const makeOverlapIndexMaps = (points, header, maskVolume) => {
+  const indexMaps = [];
+  const distanceMaps = [];
+  for (let i = 0; i < NUM_OVERLAPS; i++) {
+    indexMaps.push(new Int32Array(maskVolume.data.length).fill(-1));
+    distanceMaps.push(new Float32Array(maskVolume.data.length).fill(-1));
+  }
+  for (let i = 0; i < points.length; i++) {
+    const coord = maskVolume.worldToVoxel(...points[i]);
+    const lim = Math.floor(OVERLAP_SIZE / 2);
+    for (let vi = -lim; vi < lim; vi++) {
+      for (let vj = -lim; vj < lim; vj++) {
+        for (let vk = -lim; vk < lim; vk++) {
+          const offsetCoord = {
+            i: coord.i + vi,
+            j: coord.j + vj,
+            k: coord.k + vk,
+          }
+          const volumeIndex = getArrayOffset(offsetCoord, header);
+          let j = 0;
+          while (j < indexMaps.length && indexMaps[j][volumeIndex] !== -1) {
+            j++;
+          }
+          if (j < indexMaps.length) {
+            const p1 = points[i];
+            const p2 = maskVolume.voxelToWorld(offsetCoord.i, offsetCoord.j, offsetCoord.k);
+            const [dx, dy, dz] = [
+              p2.x - p1[0],
+              p2.y - p1[1],
+              p2.z - p1[2]
+            ];
+            const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            indexMaps[j][volumeIndex] = i;
+            distanceMaps[j][volumeIndex] = distance;
+          }
+        }
+      }
+    }
+  }
+  return { numPoints: points.length - 1, indexMaps, distanceMaps };
+};
+
 export default class TomographyViewer extends Component {
   constructor(props) {
     super(props);
     this.state = { loaded: false, sparseMaps: [] };
     this.componentWillReceiveProps(props);
-    window.fetch('static/data/AVE-ETC-A-0.MOD')
-      .then(res => res.blob())
-      .then(blob => new Promise(resolve => {
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(blob);
-        reader.onload = function() {
-          resolve(this.result);
-        }
-      }))
-      .then(buffer => {
-        const interp = new QeegModFileInterpreter(parseModFile(buffer));
-        const tomographies = [];
-        const numTomographies = interp.getDimensionSizes()[1];
-        let min = Infinity;
-        let max = -Infinity;
-        for (let i = 0; i < numTomographies; i++) {
-          const tomography = interp.getSpectrum(0, i);
-          tomographies.push(tomography);
-          for (let j = 0; j < tomography.length; j++) {
-            if (min > tomography[j]) {
-              min = tomography[j]
-            }
-            if (max < tomography[j]) {
-              max = tomography[j];
-            }
-          }
-        }
-        this.setState({ tomography: {
-          min,
-          max,
-          tomographies
-        }});
-      })
-      .catch(err => { console.error(err); alert(err); });
-    ;
   }
   componentWillReceiveProps() {
-    if (!this.props.state.has('colorMap')) {
+    if (!this.props.colorMap) {
       return;
     }
-    const stops = this.props.state.get('colorMap').toJS();
+    const stops = this.props.colorMap;
     this.colorMap = new ColorMap(100, stops);
   }
   componentDidUpdate() {
@@ -113,70 +120,11 @@ export default class TomographyViewer extends Component {
         displayVolume.blend_ratios[1] = 1.00;
         displayVolume.setColormapFunction(MASK_INDEX, component.interpolateTomographyColor.bind(component, maskVolume));
         displayVolume.setColormapFunction(MASK_INDEX, component.interpolateTomographyColor.bind(component, maskVolume));
-        const parsePoints = (text) => text.split("\n")
-          .map(s => new Float32Array(s.trim().split(/\s+/).map(n => Number(n))))
-        ;
         const header = maskVolume.header;
-        const makeOverlapIndexMaps = (points) => {
-          const indexMaps = [];
-          const distanceMaps = [];
-          for (let i = 0; i < NUM_OVERLAPS; i++) {
-            indexMaps.push(new Int32Array(maskVolume.data.length).fill(-1));
-            distanceMaps.push(new Float32Array(maskVolume.data.length).fill(-1));
-          }
-          for (let i = 0; i < points.length; i++) {
-            const coord = maskVolume.worldToVoxel(...points[i]);
-            const lim = Math.floor(OVERLAP_SIZE / 2);
-            for (let vi = -lim; vi < lim; vi++) {
-              for (let vj = -lim; vj < lim; vj++) {
-                for (let vk = -lim; vk < lim; vk++) {
-                  const offsetCoord = {
-                    i: coord.i + vi,
-                    j: coord.j + vj,
-                    k: coord.k + vk,
-                  }
-                  const volumeIndex = getArrayOffset(offsetCoord, header);
-                  let j = 0;
-                  while (j < indexMaps.length && indexMaps[j][volumeIndex] !== -1) {
-                    j++;
-                  }
-                  if (j < indexMaps.length) {
-                    const p1 = points[i];
-                    const p2 = maskVolume.voxelToWorld(offsetCoord.i, offsetCoord.j, offsetCoord.k);
-                    const [dx, dy, dz] = [
-                      p2.x - p1[0],
-                      p2.y - p1[1],
-                      p2.z - p1[2]
-                    ];
-                    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                    indexMaps[j][volumeIndex] = i;
-                    distanceMaps[j][volumeIndex] = distance;
-                  }
-                }
-              }
-            }
-          }
-          return { numPoints: points.length - 1, indexMaps, distanceMaps };
-        };
-        window.fetch('static/data/atlas/ETCgrid.txt')
-          .then(res => res.text())
-          .then(text => {
-            const points = parsePoints(text);
-            const pointsMaps = makeOverlapIndexMaps(points);
-            const sparseMaps = component.state.sparseMaps.concat([pointsMaps]);
-            component.setState({ sparseMaps });
-          });
-        ;
-        window.fetch('static/data/atlas/ETCBGgrid.txt')
-          .then(res => res.text())
-          .then(text => {
-            const points = parsePoints(text);
-            const pointsMaps = makeOverlapIndexMaps(points);
-            const sparseMaps = component.state.sparseMaps.concat([pointsMaps]);
-            component.setState({ sparseMaps });
-          });
-        ;
-        component.setState({ loaded: true });
+        const sparseMaps = component.props.tomographyPoints.map(points =>
+           makeOverlapIndexMaps(points, header, maskVolume)
+        );
+        component.setState({ loaded: true, sparseMaps });
       });
       viewer.render();
     });
@@ -188,14 +136,14 @@ export default class TomographyViewer extends Component {
     if (this.state.sparseMaps.length === 0) {
       return [0x00, 0x00, 0x00, 0x00];
     }
-    const startFrequency = this.props.state.get('startFrequency');
-    const frequency = this.props.state.get('cursorFreq') || startFrequency;
-    const frequencyStep = this.props.state.get('frequencyStep');
+    const startFrequency = this.props.startFrequency;
+    const frequency = this.props.frequency || startFrequency;
+    const frequencyStep = this.props.stepSize;
     const freqIndex = Math.max(0, Math.floor((frequency - startFrequency) / frequencyStep));
-    if (!this.state.tomography || !this.state.tomography.tomographies[freqIndex]) {
+    if (!this.props.tomography || !this.props.tomography.tomographies[freqIndex]) {
       return [0x00, 0x00, 0x00, 0x00];
     }
-    const tomography = this.state.tomography.tomographies[freqIndex];
+    const tomography = this.props.tomography.tomographies[freqIndex];
     const maps = this.state.sparseMaps.find(m => m.numPoints === tomography.length);
     if (!maps) {
       return [0x00, 0x00, 0x00, 0x00];
@@ -226,8 +174,8 @@ export default class TomographyViewer extends Component {
       sumDistances += 1 / distance;
     }
     t = t / sumDistances;
-    const minValue = this.state.tomography.min;
-    const maxValue = this.state.tomography.max;
+    const minValue = this.props.tomography.min;
+    const maxValue = this.props.tomography.max;
     const mid = (minValue + maxValue) / 2;
     t = 0.5 + (t - mid) / (maxValue - minValue);
     t = Math.max(0, Math.min(0.999, t));
