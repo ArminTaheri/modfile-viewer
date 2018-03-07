@@ -131,7 +131,7 @@ export default class TomographyViewer extends Component {
   componentDidMount() {
     const component = this;
     this.viewer = window.BrainBrowser.VolumeViewer.start("tomography-viewer-container", function(viewer) {
-      viewer.loadDefaultColorMapFromURL('static/color-maps/gray-scale.txt');
+      viewer.loadDefaultColorMapFromURL(component.props.brainbrowserColormapURL);
       // Set the size of slice display panels.
       viewer.setPanelSize(PANEL_SIZE, PANEL_SIZE);
       // Start rendering.
@@ -139,18 +139,18 @@ export default class TomographyViewer extends Component {
         volumes: [
           {
             type: 'nifti1',
-            nii_url: 'static/data/atlas/mni_icbm152_t1_tal_nlin_sym_09c.nii',
+            nii_url: component.props.atlasURLs.volume
           },
           {
             type: 'nifti1',
-            nii_url: 'static/data/atlas/mni_icbm152_gm_tal_nlin_sym_09c.nii',
+            nii_url: component.props.atlasURLs.mask
           }
         ],
         overlay: {}
       });
       viewer.addEventListener('volumeuiloaded', (event) => {
         if (event.volume_id !== DISPLAY_INDEX) {
-          event.container.parentElement.removeChild(event.container);
+          event.container.style.display = 'none';
         }
       });
       viewer.addEventListener('volumesloaded', () => {

@@ -54,6 +54,8 @@ export const TabbedViews = ({
   startFrequency,
   stepSize,
   numFrequencies,
+  atlasURLs,
+  brainbrowserColormapURL
 }) => {
   if (models.length === 0) {
     return <div>Loading...</div>;
@@ -95,6 +97,8 @@ export const TabbedViews = ({
       frequency={frequency}
       startFrequency={startFrequency}
       stepSize={stepSize}
+      atlasURLs={atlasURLs}
+      brainbrowserColormapURL={brainbrowserColormapURL}
     />
   ;
   const modelSelectStyle = {
@@ -128,7 +132,7 @@ export const TabbedViews = ({
         <div className="tab-view-content">
           <div className="tab-view-content-row">
             {layouts[activeTabIndex].createViewer()}
-            {activeTomography ? tomographyViewer : <div>'Loading...'</div>}
+            {activeTomography ? tomographyViewer : null}
           </div>
         </div>
       </div>

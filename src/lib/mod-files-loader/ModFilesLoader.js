@@ -59,7 +59,7 @@ export const ModFilesLoader = componentFromStream(props$ => {
   const mergeState = (state, update) => Object.assign({}, state, update);
   const fetchedModels$ = props$
     .map(({ fileURLs }) => {
-      return Promise.all(fileURLs.map(fetchModFile))
+      return Promise.all((fileURLs || []).map(fetchModFile))
         .then(parsed => parsed.filter(x => x !== undefined))
         .then(inModels => {
           const models = inModels.filter(m => !!m.type);
@@ -89,7 +89,7 @@ export const ModFilesLoader = componentFromStream(props$ => {
   ;
   const fetchedTomographies$ = props$
     .map(({ tomographyURLs }) => {
-      return Promise.all(tomographyURLs.map(fetchModFile))
+      return Promise.all((tomographyURLs || []).map(fetchModFile))
         .then(parsed => parsed.filter(x => x !== undefined))
         .then(tomographies => ({ tomographies, activeTomography: tomographies[0] }))
       ;
@@ -98,7 +98,7 @@ export const ModFilesLoader = componentFromStream(props$ => {
   ;
   const fetchedTomographyPoints$ = props$
     .map(({ tomographyPointsURLs }) => {
-      return Promise.all(tomographyPointsURLs.map(fetchTomographyPoints))
+      return Promise.all((tomographyPointsURLs || []).map(fetchTomographyPoints))
         .then(tomographyPoints => ({ tomographyPoints }))
       ;
     })
@@ -120,6 +120,8 @@ export const ModFilesLoader = componentFromStream(props$ => {
     activeMeasure$.map(activeMeasure => ({ activeMeasure })),
     activeTab$.map(activeTab => ({ activeTab })),
     activeTomography$.map(activeTomography => ({ activeTomography })),
+    props$.map(({ atlasURLs }) => ({ atlasURLs })),
+    props$.map(({ brainbrowserColormapURL }) => ({ brainbrowserColormapURL }))
   ]);
   return updateStream$
     .scan(mergeState, INITIAL_VIEWER_STATE)
