@@ -14,12 +14,11 @@ setObservableConfig(mostConfig);
 
 const INITIAL_VIEWER_STATE = {
   colorMaps: {
-    frequency: [],
+    frequency: ['#201965', '#201965', '#0D6737', '#917512'],
     correlation: DEFAULT_COLOR_MAP,
     tomography: DEFAULT_COLOR_MAP,
   },
   tomographyPoints: [],
-  models: [],
   frequency: 0
 }
 
@@ -73,9 +72,23 @@ export const ModFilesLoader = componentFromStream(props$ => {
           const startFrequency = getMinOf(models, 'startFrequency');
           const numFrequencies = getMinOf(models, 'numFrequencies');
           const stepSize = getMinOf(models, 'stepSize');
+          const { ETC, ETCBG, ZETC, ZETCBG, ...studies } = models.reduce((studies, model) => {
+            if (!studies[model.type]) {
+              const type = model.type;
+              studies[type] = { type, models: [], selected: [model]};
+            }
+            studies[model.type].models.push(model);
+            return studies;
+          }, {});
+          const studyTypes = Object.keys(studies);
+          studyTypes.sort().reverse();
+          const tomographies = [ETC, ETCBG, ZETC, ZETCBG].reduce((a,b) => a.concat(b || []), [])
           return {
-            models,
-            activeModel: models[0],
+            studies,
+            studyTypes,
+            tomographies,
+            activeTomography: tomographies[0],
+            activeStudyType: studyTypes[0],
             activeMeasure: 0,
             frequency: startFrequency,
             startFrequency,
@@ -83,15 +96,6 @@ export const ModFilesLoader = componentFromStream(props$ => {
             numFrequencies
           };
         })
-      ;
-    })
-    .awaitPromises()
-  ;
-  const fetchedTomographies$ = props$
-    .map(({ tomographyURLs }) => {
-      return Promise.all((tomographyURLs || []).map(fetchModFile))
-        .then(parsed => parsed.filter(x => x !== undefined))
-        .then(tomographies => ({ tomographies, activeTomography: tomographies[0] }))
       ;
     })
     .awaitPromises()
@@ -105,22 +109,24 @@ export const ModFilesLoader = componentFromStream(props$ => {
     .awaitPromises()
   ;
   const { handler: setFrequency, stream: frequencyUpdates$ } = createEventHandler();
-  const { handler: setModel, stream: activeModel$ } = createEventHandler();
+  const { handler: setStudy, stream: activeStudy$ } = createEventHandler();
+  const { handler: setStudies, stream: studies$ } = createEventHandler();
   const { handler: setShowModels, stream: showModels$ } = createEventHandler();
   const { handler: setMeasure, stream: activeMeasure$ } = createEventHandler();
   const { handler: setTab, stream: activeTab$ } = createEventHandler();
   const { handler: setTomography, stream: activeTomography$ } = createEventHandler();
   const updateStream$ = most.mergeArray([
     fetchedModels$,
-    fetchedTomographies$,
     fetchedTomographyPoints$,
     frequencyUpdates$.map(frequency => ({ frequency })),
-    activeModel$.map(activeModel => ({ activeModel })),
+    activeStudy$.map(activeStudyType => ({ activeStudyType })),
+    studies$.map(studies => ({ studies: Object.assign({}, studies) })),
     showModels$.map(showModels => ({ showModels })),
     activeMeasure$.map(activeMeasure => ({ activeMeasure })),
     activeTab$.map(activeTab => ({ activeTab })),
     activeTomography$.map(activeTomography => ({ activeTomography })),
     props$.map(({ atlasURLs }) => ({ atlasURLs })),
+    props$.map(({ colorMaps }) => ({ colorMaps: colorMaps || INITIAL_VIEWER_STATE.colorMaps })),
     props$.map(({ brainbrowserColormapURL }) => ({ brainbrowserColormapURL }))
   ]);
   return updateStream$
@@ -128,7 +134,8 @@ export const ModFilesLoader = componentFromStream(props$ => {
     .map(state =>
       <TabbedViews
         setFrequency={setFrequency}
-        setModel={setModel}
+        setStudy={study => { setMeasure(0); setStudy(study); }}
+        setStudies={setStudies}
         setShowModels={setShowModels}
         setMeasure={setMeasure}
         setTab={setTab}

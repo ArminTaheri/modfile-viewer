@@ -11,11 +11,11 @@ const setPlotPropTypes = setPropTypes({
   frequency: PropTypes.number,
   setFrequency: PropTypes.func,
   colorMap: PropTypes.arrayOf(PropTypes.string.isRequired),
-  plot: PropTypes.instanceOf(FreqPlotData),
+  plots: PropTypes.arrayOf(PropTypes.instanceOf(FreqPlotData)),
 })
 
 const Loading = () => <div>No data currently set.</div>
-const showLoading = branch(({ plot }) => !plot, renderComponent(Loading))
+const showLoading = branch(({ plots }) => !plots, renderComponent(Loading))
 
 const getScales = (extent, { top, left, width, height }) => {
   const xScale = d3.scaleLinear()
@@ -45,7 +45,8 @@ const getPlotDimensions = (rect) => ({
   height: rect.height - PADDING.bottom
 });
 
-const cursorClickHandler = ({ plot, setFrequency }, event) => {
+const cursorClickHandler = ({ plots, setFrequency }, event) => {
+  const plot = plots[0];
   if (!(event.button === 0 && event.buttons > 0)) {
     return;
   }
@@ -75,7 +76,8 @@ const cursorClick = withHandlers({
 // Drawing enhancers:
 const statusText = enhanceWithRefs({
   didMount() {
-    const  { plot } = this.props;
+    const  { plots } = this.props;
+    const plot = plots[0];
     const  { svg } = this.nodeRefs;
     const rect = svg.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
@@ -95,7 +97,8 @@ const statusText = enhanceWithRefs({
       .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 30})`)
     ;
     this.updatePlot = () => {
-      const  { plot, frequency } = this.props;
+      const  { plots, frequency } = this.props;
+      const plot = plots[0];
       const { domain, traces } = plot;
       if (!(domain && domain.length)) {
         return;
@@ -111,7 +114,8 @@ const statusText = enhanceWithRefs({
 })
 const cursor = enhanceWithRefs({
   didMount() {
-    const { plot } = this.props;
+    const { plots } = this.props;
+    const plot = plots[0];
     const  { graphArea, container } = this.nodeRefs;
     const rect = container.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
@@ -143,7 +147,8 @@ const axisBottom = enhanceWithRefs({
   didMount() {
     let axis = null;
     this.updatePlot = () => {
-      const { axes, plot } = this.props;
+      const { axes, plots } = this.props;
+      const plot = plots[0];
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
       if (axis) {
@@ -201,7 +206,8 @@ const axisLeft = enhanceWithRefs({
   didMount() {
     let axis = null;
     this.updatePlot = () => {
-      const { plot } = this.props;
+      const { plots } = this.props;
+      const plot = plots[0];
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
       const { yScale } = getScales(plot.extent, dims);
@@ -227,41 +233,47 @@ const axisLeft = enhanceWithRefs({
 
 const curves = enhanceWithRefs({
   didMount() {
-    const { plot, setRefs } = this.props;
+    const { plots, colorMap, setRefs } = this.props;
+    const plot = plots[0];
     const rect = this.nodeRefs.container.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
     const { xScale, yScale } = getScales(plot.extent, dims);
-    const lines = plot.traces.map(trace => {
-      const graphArea = d3.select(this.nodeRefs.svg)
-        .append('g')
-        .attr('transform', `translate(${dims.left}, ${dims.top})`)
-      const svgline = graphArea.append('path')
-        .attr('fill', 'none')
-        .attr('stroke', 'black')
-        .attr('stroke-linejoin', 'round')
-        .attr('stroke-linecap', 'round')
-        .attr('stroke-width', 1)
-      ;
-      if (setRefs instanceof Function) {
-        setRefs({ graphArea });
-      }
-      return { svgline };
-    });
+    const plotLines = plots.map((plot, i) => {
+      return plot.traces.map(trace => {
+        const graphArea = d3.select(this.nodeRefs.svg)
+         .append('g')
+         .attr('transform', `translate(${dims.left}, ${dims.top})`)
+        const svgLine = graphArea.append('path')
+         .attr('fill', 'none')
+         .attr('stroke', colorMap[i % colorMap.length] || 'black')
+         .attr('stroke-linejoin', 'round')
+         .attr('stroke-linecap', 'round')
+         .attr('stroke-width', 1)
+        ;
+        if (setRefs instanceof Function) {
+          setRefs({ graphArea });
+        }
+        return { svgLine, plot };
+      });
+    })
     this.updatePlot = () => {
-      const { plot } = this.props;
+      const { plots } = this.props;
+      const plot = plots[0];
       const indices = plot.domain.map((_, i) => i);
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
       const { xScale, yScale } = getScales(plot.extent, dims);
-      lines.forEach(({ svgline }, j) => {
-        const line = d3.line()
-          .x(i => xScale(plot.domain[i]))
-          .y(i => yScale(plot.traces[j][i]))
-        ;
-        svgline
-          .datum(indices)
-          .attr('d', line)
-        ;
+        plotLines.forEach(plotLine => {
+          plotLine.forEach((plotContext, j) => {
+            const line = d3.line()
+              .x(i => xScale(plotContext.plot.domain[i]))
+              .y(i => yScale(plotContext.plot.traces[j][i]))
+            ;
+            plotContext.svgLine
+              .datum(indices)
+              .attr('d', line)
+            ;
+            });
       });
     }
     this.updatePlot();
@@ -280,7 +292,7 @@ const updateOnResize = enhanceWithRefs({
   }
 })
 
-const SVGPlot = ({ plot, frequency, setFrequency, colorMap, categoryIntervals, ...props }) =>
+const SVGPlot = ({ plots, frequency, setFrequency, colorMap, categoryIntervals, ...props }) =>
   <Plot {...props}>
     <svg />
   </Plot>

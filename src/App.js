@@ -15,12 +15,6 @@ App.propTypes = {
       url: PropTypes.string
     })
   ),
-  tomographyURLs: PropTypes.arrayOf(
-    PropTypes.shape({
-      fileName: PropTypes.string,
-      url: PropTypes.string
-    })
-  ),
   tomographyPointsURLs: PropTypes.arrayOf(PropTypes.string),
   atlasURLs: PropTypes.shape({
     volume: PropTypes.string,

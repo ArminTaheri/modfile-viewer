@@ -115,7 +115,7 @@ export const modFileViewers = ({
   stepSize,
   numFrequencies,
   colorMaps,
-  model,
+  models,
   activeMeasure
 }) => {
   const setFrequencyBounded = frequency => {
@@ -124,25 +124,29 @@ export const modFileViewers = ({
     setFrequency(boundedFrequency);
   }
   const makeFreqPlotCellGrid = enableStats => {
-    const plotElements = model.measurePlots[activeMeasure].map((plot, i) =>
+    const plotsCollection = [];
+    models.forEach(model => {
+      plotsCollection.push(model.measurePlots[activeMeasure]);
+    });
+    const plotElements = plotsCollection.map((plots, i) =>
       <FrequencyPlot
         key={i}
         plotClass='modfile-viewer-plot'
-        plot={plot}
+        plots={plots}
         colorMap={colorMaps.frequency}
         frequency={frequency}
         setFrequency={setFrequencyBounded}
       />
     );
-    const headModel = (
+    const headModel = models.length === 1 ? (
       <CorrelationPlot
         frequency={frequency}
         setFrequency={setFrequencyBounded}
         colorMap={colorMaps.correlation}
-        plot={model.correlation}
+        plot={models[0].correlation}
         plotClass='modfile-viewer-plot'
       />
-    );
+    ) : null;
     const layoutProps = {
       headModel,
       frequency,
@@ -160,7 +164,7 @@ export const modFileViewers = ({
     );
   };
   const makeCorrelationPlotCellGrid = () => {
-    const plotElements = model.measurePlots[activeMeasure].map(plot =>
+    const plotElements = models[0].measurePlots[activeMeasure].map(plot =>
       <CorrelationPlot
         key={plot.name + frequency}
         frequency={frequency}
@@ -186,7 +190,7 @@ export const modFileViewers = ({
     );
   }
   const makeMatrixCorrelationPlotCellGrid = () => {
-    const plotElements = model.measurePlots[activeMeasure].map(plot =>
+    const plotElements = models[0].measurePlots[activeMeasure].map(plot =>
       <CorrelationPlot
         key={plot.name}
         setFrequency={setFrequencyBounded}
@@ -203,25 +207,41 @@ export const modFileViewers = ({
       </PlotCellGrid>
     );
   }
+  const toggleModel = (study, model) => {
+    if (study.selected.length <= 1) {
+      return;
+    }
+    if (study.selected.includes(model)) {
+      study.selected = study.selected.filter(s => s !== model);
+      return study;
+    }
+    study.selected.push(model);
+    return study;
+  }
   const NB1020 = {
     name: 'Narrow Band 10/20',
-    createViewer: () => makeFreqPlotCellGrid(true)
+    createViewer: () => makeFreqPlotCellGrid(true),
+    updateStudy: (study, model) => toggleModel(study, model)
   };
   const NB1020NOSTAT = {
     name: 'Narrow Band 10/20',
-    createViewer: () => makeFreqPlotCellGrid(false)
+    createViewer: () => makeFreqPlotCellGrid(false),
+    updateStudy: (study, model) => { study.selected = [model]; return study; }
   };
   const NB1020COMP = {
     name: 'Narrow Band 10/20 Comparison',
-    createViewer: () => makeFreqPlotCellGrid(false)
+    createViewer: () => makeFreqPlotCellGrid(false),
+    updateStudy: (study, model) => { study.selected = [model]; return study; }
   };
   const BBAND = {
     name: 'Broad Band',
-    createViewer: () => makeMatrixCorrelationPlotCellGrid()
+    createViewer: () => makeMatrixCorrelationPlotCellGrid(),
+    updateStudy: (study, model) => { study.selected = [model]; return study; }
   };
   const CROSSMEASURES = {
     name: 'Cross Measures',
-    createViewer: () => makeCorrelationPlotCellGrid()
+    createViewer: () => makeCorrelationPlotCellGrid(),
+    updateStudy: (study, model) => { study.selected = [model]; return study; }
   };
   return {
     NB1020,

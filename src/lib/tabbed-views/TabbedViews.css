@@ -56,7 +56,16 @@
   padding-bottom: 15px;
 }
 
+.study-selector {
+  cursor: pointer;
+  padding-bottom: 20px;
+}
+
 .model-selector * {
+  margin: 0;
+}
+
+.study-selector * {
   margin: 0;
 }
 

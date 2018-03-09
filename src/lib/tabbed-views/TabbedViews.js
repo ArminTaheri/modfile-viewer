@@ -13,7 +13,7 @@ import './TabbedViews.css';
     CROSSMEASURES
 */
 const typeToLayouts = {
-  ZCROSS: ['NB1020NOSTAT'],
+  ZCROSS: ['NB1020'],
   CROSS: ['NB1020'],
   ZBBSP: ['BBAND'],
   BBSP: ['BBAND'],
@@ -37,9 +37,11 @@ const Tabs = ({ activeTab, setTab, layouts }) => {
 export const TabbedViews = ({
   activeTab,
   setTab,
-  models,
-  activeModel,
-  setModel,
+  studies,
+  studyTypes,
+  activeStudyType,
+  setStudy,
+  setStudies,
   showModels,
   setShowModels,
   activeMeasure,
@@ -57,10 +59,11 @@ export const TabbedViews = ({
   atlasURLs,
   brainbrowserColormapURL
 }) => {
-  if (models.length === 0) {
+  if (!studies || !studies[activeStudyType]) {
     return <div>Loading...</div>;
   }
-  const model = activeModel
+  const study = studies[activeStudyType];
+  const models = study.selected;
   const viewers = modFileViewers({
     frequency,
     setFrequency,
@@ -68,31 +71,51 @@ export const TabbedViews = ({
     stepSize,
     numFrequencies,
     colorMaps,
-    model,
+    models,
     activeMeasure
   });
-  const layouts = typeToLayouts[model.type].map(layoutName => viewers[layoutName]);
+  const layouts = typeToLayouts[activeStudyType].map(layoutName => viewers[layoutName]);
   const activeTabIndex = activeTab || 0;
-  const modelSelectComponent = (model, i) =>
+  const activeLayout = layouts[activeTabIndex];
+  const modelSelectComponent = selected => (model, i) =>
     <li key={i} className="model-selector-list-item">
-      <div onClick={() => setModel(model)} className={`model-selector ${model === activeModel ? '--selected' : ''}`}>
+      <div
+        onClick={() => { studies[activeStudyType] = activeLayout.updateStudy(study, model); setStudies(studies)}}
+        className={`model-selector ${selected.includes(model) ? '--selected' : ''}`}
+      >
         <h5>{model.longType}</h5>
         <small>{model.fileName}</small>
       </div>
     </li>
   ;
+  const studySelectComponent = (studyType, i) => {
+    const study = studies[studyType];
+    return (
+      <li key={i} className="study-selector-list-item">
+        <div onClick={() => setStudy(studyType)} className="study-selector">
+          <h5>{study.type}</h5>
+          <br />
+          { study.type === activeStudyType &&
+            <ul>
+              {study.models.map(modelSelectComponent(study.selected))}
+            </ul>
+          }
+        </div>
+      </li>
+    );
+  };
   const tomoSelectComponent = (tomography, i) =>
     <li key={i} className="model-selector-list-item">
       <div onClick={() => setTomography(tomography)} className={`model-selector ${tomography === activeTomography ? '--selected' : ''}`}>
-        <h5>{tomography.longType}</h5>
-        <small>{tomography.fileName}</small>
+        <h5>{tomography.models[0].longType}</h5>
+        <small>{tomography.models[0].fileName}</small>
       </div>
     </li>
   ;
   const tomographyViewer =
     <TomographyViewer
       tomographyPoints={tomographyPoints}
-      tomography={activeTomography}
+      tomography={activeTomography.models[0]}
       colorMap={colorMaps.tomography}
       frequency={frequency}
       startFrequency={startFrequency}
@@ -114,7 +137,7 @@ export const TabbedViews = ({
         </div>
         <div className="model-select-container" style={modelSelectStyle}>
           <ul className="model-selector-list">
-            {models.map(modelSelectComponent)}
+            {studyTypes.map(studySelectComponent)}
           </ul>
           <br />
           <ul className="model-selector-list">
@@ -124,17 +147,21 @@ export const TabbedViews = ({
 
       </div>
       <div className="model-view">
-        <Tabs
-          activeTab={activeTabIndex}
-          setTab={setTab}
-          layouts={layouts}
-        />
-        <div className="tab-view-content">
-          <div className="tab-view-content-row">
-            {layouts[activeTabIndex].createViewer()}
-            {activeTomography ? tomographyViewer : null}
+        { models[0] &&
+          <div>
+            <Tabs
+              activeTab={activeTabIndex}
+              setTab={setTab}
+              layouts={layouts}
+            />
+            <div className="tab-view-content">
+              <div className="tab-view-content-row">
+                {layouts[activeTabIndex].createViewer()}
+                {activeTomography ? tomographyViewer : null}
+              </div>
           </div>
-        </div>
+          </div>
+        }
       </div>
     </div>
   );
