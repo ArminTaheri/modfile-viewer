@@ -126,11 +126,16 @@ export const modFileViewers = ({
   const makeFreqPlotCellGrid = enableStats => {
     const plotsCollection = [];
     models.forEach(model => {
-      plotsCollection.push(model.measurePlots[activeMeasure]);
+      model.measurePlots[activeMeasure].forEach((plots, j) => {
+        if (!plotsCollection[j]) {
+          plotsCollection[j] = [];
+        }
+        plotsCollection[j].push(plots);
+      });
     });
     const plotElements = plotsCollection.map((plots, i) =>
       <FrequencyPlot
-        key={i}
+        key={i + (models[0] && models[0].uid)}
         plotClass='modfile-viewer-plot'
         plots={plots}
         colorMap={colorMaps.frequency}
@@ -208,10 +213,10 @@ export const modFileViewers = ({
     );
   }
   const toggleModel = (study, model) => {
-    if (study.selected.length <= 1) {
-      return;
-    }
     if (study.selected.includes(model)) {
+      if (study.selected.length <= 1) {
+        return study;
+      }
       study.selected = study.selected.filter(s => s !== model);
       return study;
     }

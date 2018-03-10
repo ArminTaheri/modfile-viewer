@@ -77,17 +77,37 @@ export const TabbedViews = ({
   const layouts = typeToLayouts[activeStudyType].map(layoutName => viewers[layoutName]);
   const activeTabIndex = activeTab || 0;
   const activeLayout = layouts[activeTabIndex];
-  const modelSelectComponent = selected => (model, i) =>
-    <li key={i} className="model-selector-list-item">
-      <div
-        onClick={() => { studies[activeStudyType] = activeLayout.updateStudy(study, model); setStudies(studies)}}
-        className={`model-selector ${selected.includes(model) ? '--selected' : ''}`}
-      >
-        <h5>{model.longType}</h5>
-        <small>{model.fileName}</small>
-      </div>
-    </li>
+  const TAG_SIZE = 10;
+  const ColorTag = ({ hex }) =>
+    <div
+      style={{
+        display: 'inline-block',
+        backgroundColor: hex,
+        width: `${TAG_SIZE}px`,
+        height: `${TAG_SIZE}px`
+      }}
+    >
+    </div>
   ;
+  const modelSelectComponent = selected => (model, i) => {
+    const index = selected.findIndex(s => s === model);
+    const isSelected = index !== -1;
+    return (
+      <li key={i} className="model-selector-list-item">
+        <div
+          onClick={() => { studies[activeStudyType] = activeLayout.updateStudy(study, model); setStudies(studies)}}
+          className={`model-selector ${isSelected ? '--selected' : ''}`}
+        >
+          <h5>{model.longType}</h5>
+          {
+            ['CROSS', 'ZCROSS'].includes(model.type) &&
+            isSelected &&
+            <ColorTag hex={colorMaps.frequency[index % colorMaps.frequency.length]} />
+          }<small>{model.fileName}</small>
+        </div>
+      </li>
+    );
+  };
   const studySelectComponent = (studyType, i) => {
     const study = studies[studyType];
     return (
@@ -126,8 +146,8 @@ export const TabbedViews = ({
   ;
   const modelSelectStyle = {
     display: showModels ? 'flex' : 'none',
-    minWidth: showModels ? '150px' : '0',
-    maxWidth: showModels ? '150px' : '0'
+    minWidth: showModels ? '175px' : '0',
+    maxWidth: showModels ? '175px' : '0'
   };
   return (
     <div className="tab-views-container">

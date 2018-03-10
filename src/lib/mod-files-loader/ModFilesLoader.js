@@ -14,7 +14,7 @@ setObservableConfig(mostConfig);
 
 const INITIAL_VIEWER_STATE = {
   colorMaps: {
-    frequency: ['#201965', '#201965', '#0D6737', '#917512'],
+    frequency: ['#6b7a8f', '#66cc66', '#f7882f', '#f7c331', '	#dcc7aa'],
     correlation: DEFAULT_COLOR_MAP,
     tomography: DEFAULT_COLOR_MAP,
   },

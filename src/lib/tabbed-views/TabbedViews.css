@@ -67,6 +67,11 @@
 
 .study-selector * {
   margin: 0;
+  padding: 0;
+}
+
+.study-selector h5:hover {
+  text-decoration: underline;
 }
 
 .model-selector-list {

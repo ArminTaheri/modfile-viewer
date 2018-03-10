@@ -16,6 +16,14 @@ const transformation = {
   CROSS: number => Math.log(Math.abs(number)) / Math.log(Math.E),
 }
 
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
 
 /* Take a parsed .MOD file and interpret its contents case by case by study type.
  * Wrap the interpretted values into immutable data structures or data classes in state/PlotData.js.
@@ -84,6 +92,7 @@ export function extractModel(modData, fileName) {
         stepSize
       );
       return Object.assign(model, {
+        uid: guid(),
         measurePlots,
         startFrequency,
         stepSize,
@@ -112,6 +121,7 @@ export function extractModel(modData, fileName) {
         );
       });
       return Object.assign(model, {
+        uid: guid(),
         measurePlots: [plots],
         startFrequency,
         stepSize,
@@ -142,7 +152,8 @@ export function extractModel(modData, fileName) {
         }
       }
       return Object.assign(model, {
-        measurePlots: [plots],
+        uid: guid(),
+        measurePlots: [plots.slice(0, 15)],
         totals
       });
     }
@@ -167,6 +178,7 @@ export function extractModel(modData, fileName) {
         }
       }
       return Object.assign(model, {
+        uid: guid(),
         min,
         max,
         tomographies

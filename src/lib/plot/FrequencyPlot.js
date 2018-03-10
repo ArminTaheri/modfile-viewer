@@ -113,7 +113,7 @@ const statusText = enhanceWithRefs({
   }
 })
 const cursor = enhanceWithRefs({
-  didMount() {
+  didMount()  {
     const { plots } = this.props;
     const plot = plots[0];
     const  { graphArea, container } = this.nodeRefs;
@@ -234,10 +234,8 @@ const axisLeft = enhanceWithRefs({
 const curves = enhanceWithRefs({
   didMount() {
     const { plots, colorMap, setRefs } = this.props;
-    const plot = plots[0];
     const rect = this.nodeRefs.container.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
-    const { xScale, yScale } = getScales(plot.extent, dims);
     const plotLines = plots.map((plot, i) => {
       return plot.traces.map(trace => {
         const graphArea = d3.select(this.nodeRefs.svg)
