@@ -22,22 +22,22 @@ const FrequencyInput = ({ frequency, setFrequency, startFrequency, numFrequencie
   </div>
 ;
 
-const StatsInput = ({ stats, setStats }) =>
+const StatsInput = ({ showMean, showSTDev, setShowMean, setShowSTDev }) =>
   <div className='modfile-viewer-input'>
     <div>
       <label>Mean: </label>
       <input
         type="checkbox"
-        checked={!!stats.mean}
-        onChange={e => setStats({ mean: e.target.checked })}
+        checked={!!showMean}
+        onChange={e => setShowMean(e.target.checked)}
       />
     </div>
     <div>
       <label>Std. Dev: </label>
       <input
         type="checkbox"
-        checked={!!stats.stdDev}
-        onChange={e => setStats({ stdDev: e.target.checked })}
+        checked={!!showSTDev}
+        onChange={e => setShowSTDev(e.target.checked)}
       />
     </div>
   </div>
@@ -46,6 +46,7 @@ const StatsInput = ({ stats, setStats }) =>
 export const scalpPositionFrequencyLayout = props => children => {
   const {
     headModel,
+    statsInput,
     frequency,
     setFrequency,
     startFrequency,
@@ -61,7 +62,7 @@ export const scalpPositionFrequencyLayout = props => children => {
       stepSize={stepSize}
     />
   ;
-  return listToScalpLayout(children, renderedFrequencyInput, headModel);
+  return listToScalpLayout(children, renderedFrequencyInput, headModel, statsInput);
 }
 
 export const scalpPositionCorrelationLayout = props => children => {
@@ -116,7 +117,11 @@ export const modFileViewers = ({
   numFrequencies,
   colorMaps,
   models,
-  activeMeasure
+  activeMeasure,
+  showMean,
+  showSTDev,
+  setShowMean,
+  setShowSTDev
 }) => {
   const setFrequencyBounded = frequency => {
     const [min, max] = [startFrequency, startFrequency + stepSize * (numFrequencies - 1)];
@@ -138,9 +143,11 @@ export const modFileViewers = ({
         key={i + (models[0] && models[0].uid)}
         plotClass='modfile-viewer-plot'
         plots={plots}
-        colorMap={colorMaps.frequency}
+        colorMaps={colorMaps.frequency}
         frequency={frequency}
         setFrequency={setFrequencyBounded}
+        showMean={(plots.length > 1 && showMean) || false}
+        showSTDev={(plots.length > 1 && showSTDev) || false}
       />
     );
     const headModel = models.length === 1 ? (
@@ -152,8 +159,17 @@ export const modFileViewers = ({
         plotClass='modfile-viewer-plot'
       />
     ) : null;
+    const statsInput = plotsCollection.length > 0 && plotsCollection[0].length > 1 ? (
+      <StatsInput
+        showMean={showMean}
+        showSTDev={showSTDev}
+        setShowMean={setShowMean}
+        setShowSTDev={setShowSTDev}
+      />
+    ) : null;
     const layoutProps = {
       headModel,
+      statsInput,
       frequency,
       setFrequency: setFrequencyBounded,
       startFrequency,

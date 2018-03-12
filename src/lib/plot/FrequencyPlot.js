@@ -10,8 +10,14 @@ import { enhanceWithRefs, Plot } from './Plot';
 const setPlotPropTypes = setPropTypes({
   frequency: PropTypes.number,
   setFrequency: PropTypes.func,
-  colorMap: PropTypes.arrayOf(PropTypes.string.isRequired),
+  colorMaps: PropTypes.shape({
+    traces: PropTypes.arrayOf(PropTypes.string),
+    mean: PropTypes.string,
+    stdev: PropTypes.string
+  }),
   plots: PropTypes.arrayOf(PropTypes.instanceOf(FreqPlotData)),
+  showMean: PropTypes.bool,
+  showSTDev: PropTypes.bool
 })
 
 const Loading = () => <div>No data currently set.</div>
@@ -76,8 +82,8 @@ const cursorClick = withHandlers({
 // Drawing enhancers:
 const statusText = enhanceWithRefs({
   didMount() {
-    const  { plots } = this.props;
-    const plot = plots[0];
+    const  { plots, colorMaps } = this.props;
+    const colorMap = colorMaps.traces || [];
     const  { svg } = this.nodeRefs;
     const rect = svg.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
@@ -87,27 +93,34 @@ const statusText = enhanceWithRefs({
       .style('font-size', '11px')
       .attr('fill', 'black')
       .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 15})`)
-      .text(plot.label)
+      .text(plots[0].label)
     ;
-    const cursorValText = d3.select(svg)
-      .append('g')
-      .append('text')
-      .style('font-size', '10px')
-      .attr('fill', 'black')
-      .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 30})`)
-    ;
+    const drawCursorText = (plot, i) => {
+      return d3.select(svg)
+        .append('g')
+        .append('text')
+        .style('font-size', '10px')
+        .attr('fill', (colorMap[i % colorMap.length]) || 'black')
+        .attr('transform', `translate(${dims.left + dims.width - 60}, ${dims.top + 30 + i * 8})`)
+      ;
+    };
+    let cursorTexts = [];
     this.updatePlot = () => {
       const  { plots, frequency } = this.props;
-      const plot = plots[0];
-      const { domain, traces } = plot;
-      if (!(domain && domain.length)) {
-        return;
-      }
-      const index = Math.floor(Math.min((frequency - plot.startFrequency) / plot.stepSize, plot.steps));
-      if (plot.traces[0][index]) {
-        const rounded = Math.round(traces[0][index] * 1000) / 1000
-        cursorValText.text(rounded);
-      }
+      cursorTexts.forEach(cursorText => cursorText.remove());
+      cursorTexts = [];
+      plots.forEach((plot, i) => {
+        const { domain, traces } = plot;
+        if (!(domain && domain.length)) {
+          return;
+        }
+        const index = Math.floor(Math.min((frequency - plot.startFrequency) / plot.stepSize, plot.steps));
+        if (plot.traces[0][index]) {
+          const rounded = Math.round(traces[0][index] * 1000) / 1000
+          cursorTexts[i] = drawCursorText(plot, i);
+          cursorTexts[i].text(rounded);
+        }
+      })
     };
     this.updatePlot();
   }
@@ -233,45 +246,57 @@ const axisLeft = enhanceWithRefs({
 
 const curves = enhanceWithRefs({
   didMount() {
-    const { plots, colorMap, setRefs } = this.props;
+    const { plots, colorMaps, setRefs } = this.props;
+    const colorMap = colorMaps.traces || [];
+    /* TODO: get mean and stdev traces somehow
+     * const meanTrace = new Float32Array(plots[0].length).fill(0);
+     * const stdevTrace = new Float32Array(plots[0].length).fill(0);
+     */
     const rect = this.nodeRefs.container.getBoundingClientRect();
     const dims = getPlotDimensions(rect);
-    const plotLines = plots.map((plot, i) => {
-      return plot.traces.map(trace => {
-        const graphArea = d3.select(this.nodeRefs.svg)
-         .append('g')
-         .attr('transform', `translate(${dims.left}, ${dims.top})`)
-        const svgLine = graphArea.append('path')
-         .attr('fill', 'none')
-         .attr('stroke', colorMap[i % colorMap.length] || 'black')
-         .attr('stroke-linejoin', 'round')
-         .attr('stroke-linecap', 'round')
-         .attr('stroke-width', 1)
-        ;
-        if (setRefs instanceof Function) {
-          setRefs({ graphArea });
-        }
-        return { svgLine, plot };
+    const { xScale, yScale } = getScales(plots[0].extent, dims);
+    const lines = [];
+    const graphArea = d3.select(this.nodeRefs.svg)
+     .append('g')
+     .attr('transform', `translate(${dims.left}, ${dims.top})`)
+    if (setRefs instanceof Function) {
+      setRefs({ graphArea });
+    }
+    const drawLine = (index, xScale, yScale, dims, colorMap, domain, trace) => {
+      const svgLine = graphArea.append('path')
+       .attr('fill', 'none')
+       .attr('stroke', colorMap[index % colorMap.length] || 'black')
+       .attr('stroke-linejoin', 'round')
+       .attr('stroke-linecap', 'round')
+       .attr('stroke-width', 1)
+      ;
+      const line = d3.line()
+        .x(i => xScale(domain[i]))
+        .y(i => yScale(trace[i]))
+      ;
+      const indices = domain.map((_, i) => i);
+      svgLine
+        .datum(indices)
+        .attr('d', line)
+      ;
+      return svgLine;
+    };
+    plots.forEach((plot, i) => {
+      plot.traces.forEach(trace => {
+        lines.push(drawLine(i, xScale, yScale, dims, colorMap, plot.domain, trace));
       });
-    })
+    });
     this.updatePlot = () => {
-      const { plots } = this.props;
-      const plot = plots[0];
-      const indices = plot.domain.map((_, i) => i);
+      const { plots, colorMaps } = this.props;
+      const colorMap = colorMaps.traces || [];
       const rect = this.nodeRefs.container.getBoundingClientRect();
       const dims = getPlotDimensions(rect);
-      const { xScale, yScale } = getScales(plot.extent, dims);
-        plotLines.forEach(plotLine => {
-          plotLine.forEach((plotContext, j) => {
-            const line = d3.line()
-              .x(i => xScale(plotContext.plot.domain[i]))
-              .y(i => yScale(plotContext.plot.traces[j][i]))
-            ;
-            plotContext.svgLine
-              .datum(indices)
-              .attr('d', line)
-            ;
-            });
+      const { xScale, yScale } = getScales(plots[0].extent, dims);
+      lines.forEach((line) => line.remove());
+      plots.forEach((plot, i) => {
+        plot.traces.forEach(trace => {
+          lines.push(drawLine(i, xScale, yScale, dims, colorMap, plot.domain, trace));
+        });
       });
     }
     this.updatePlot();
@@ -290,7 +315,7 @@ const updateOnResize = enhanceWithRefs({
   }
 })
 
-const SVGPlot = ({ plots, frequency, setFrequency, colorMap, categoryIntervals, ...props }) =>
+const SVGPlot = ({ plots, frequency, setFrequency, colorMaps, categoryIntervals, showMean, showSTDev, ...props }) =>
   <Plot {...props}>
     <svg />
   </Plot>

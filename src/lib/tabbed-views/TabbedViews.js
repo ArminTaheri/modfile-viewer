@@ -45,6 +45,10 @@ export const TabbedViews = ({
   showModels,
   setShowModels,
   activeMeasure,
+  showMean,
+  showSTDev,
+  setShowMean,
+  setShowSTDev,
   setMeasure,
   tomographies,
   tomographyPoints,
@@ -72,7 +76,11 @@ export const TabbedViews = ({
     numFrequencies,
     colorMaps,
     models,
-    activeMeasure
+    activeMeasure,
+    showMean,
+    showSTDev,
+    setShowMean,
+    setShowSTDev
   });
   const layouts = typeToLayouts[activeStudyType].map(layoutName => viewers[layoutName]);
   const activeTabIndex = activeTab || 0;
@@ -102,7 +110,8 @@ export const TabbedViews = ({
           {
             ['CROSS', 'ZCROSS'].includes(model.type) &&
             isSelected &&
-            <ColorTag hex={colorMaps.frequency[index % colorMaps.frequency.length]} />
+            colorMaps &&  colorMaps.frequency && colorMaps.frequency.traces &&
+            <ColorTag hex={colorMaps.frequency.traces[index % colorMaps.frequency.traces.length]} />
           }<small>{model.fileName}</small>
         </div>
       </li>

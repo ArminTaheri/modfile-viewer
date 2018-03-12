@@ -14,12 +14,18 @@ setObservableConfig(mostConfig);
 
 const INITIAL_VIEWER_STATE = {
   colorMaps: {
-    frequency: ['#6b7a8f', '#66cc66', '#f7882f', '#f7c331', '	#dcc7aa'],
+    frequency: {
+      traces: ['#6b7a8f', '#66cc66', '#f7882f', '#f7c331', '	#dcc7aa'],
+      mean: '#efdd00',
+      stdev: '#2fd2f9',
+    },
     correlation: DEFAULT_COLOR_MAP,
     tomography: DEFAULT_COLOR_MAP,
   },
   tomographyPoints: [],
-  frequency: 0
+  frequency: 0,
+  showMean: false,
+  showSTDev: false
 }
 
 const parseTomographyPoints = (text) => text.split("\n")
@@ -115,6 +121,8 @@ export const ModFilesLoader = componentFromStream(props$ => {
   const { handler: setMeasure, stream: activeMeasure$ } = createEventHandler();
   const { handler: setTab, stream: activeTab$ } = createEventHandler();
   const { handler: setTomography, stream: activeTomography$ } = createEventHandler();
+  const { handler: setShowMean, stream: showMean$ } = createEventHandler();
+  const { handler: setShowSTDev, stream: showSTDev$ } = createEventHandler();
   const updateStream$ = most.mergeArray([
     fetchedModels$,
     fetchedTomographyPoints$,
@@ -125,6 +133,8 @@ export const ModFilesLoader = componentFromStream(props$ => {
     activeMeasure$.map(activeMeasure => ({ activeMeasure })),
     activeTab$.map(activeTab => ({ activeTab })),
     activeTomography$.map(activeTomography => ({ activeTomography })),
+    showMean$.map(showMean => ({ showMean })),
+    showSTDev$.map(showSTDev => ({ showSTDev })),
     props$.map(({ atlasURLs }) => ({ atlasURLs })),
     props$.map(({ colorMaps }) => ({ colorMaps: colorMaps || INITIAL_VIEWER_STATE.colorMaps })),
     props$.map(({ brainbrowserColormapURL }) => ({ brainbrowserColormapURL }))
@@ -140,6 +150,8 @@ export const ModFilesLoader = componentFromStream(props$ => {
         setMeasure={setMeasure}
         setTab={setTab}
         setTomography={setTomography}
+        setShowMean={setShowMean}
+        setShowSTDev={setShowSTDev}
         {...state}
       />
     );
