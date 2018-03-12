@@ -194,6 +194,7 @@ export function fetchModFile({ url, fileName: inFileName }) {
   return fetch(url, {
     method: 'get',
     responseType: 'blob',
+    credentials: 'include',
   })
   .then(res => res.blob())
   .then(blob => new Promise(resolve => {
