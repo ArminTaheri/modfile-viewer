@@ -141,7 +141,8 @@ export const TabbedViews = ({
       </div>
     </li>
   ;
-  const tomographyViewer =
+  const tomographyViewer = (
+    activeTomography &&
     <TomographyViewer
       tomographyPoints={tomographyPoints}
       tomography={activeTomography.models[0]}
@@ -152,7 +153,7 @@ export const TabbedViews = ({
       atlasURLs={atlasURLs}
       brainbrowserColormapURL={brainbrowserColormapURL}
     />
-  ;
+  );
   const modelSelectStyle = {
     display: showModels ? 'flex' : 'none',
     minWidth: showModels ? '175px' : '0',
@@ -186,7 +187,7 @@ export const TabbedViews = ({
             <div className="tab-view-content">
               <div className="tab-view-content-row">
                 {layouts[activeTabIndex].createViewer()}
-                {activeTomography ? tomographyViewer : null}
+                {tomographyViewer}
               </div>
           </div>
           </div>
