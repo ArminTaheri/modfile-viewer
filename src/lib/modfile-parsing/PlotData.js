@@ -56,27 +56,27 @@ function project(theta, phi) {
 }
 
 const PI = Math.PI;
-const positions1020 = {
-  'Fp1-AVR': project(-0.4 * PI, -0.5 * PI),
-  'Fp2-AVR': project(0.4 * PI, 0.5 * PI),
-  'F3-AVR': project(-0.25 * PI, 0.25 * PI),
-  'F4-AVR': project(0.25 * PI, 0.25 * PI),
-  'C3-AVR': project(0, -0.25 * PI),
-  'C4-AVR': project(0, 0.25 * PI),
-  'P3-AVR': project(0.25 * PI, -0.25 * PI),
-  'P4-AVR': project(-0.25 * PI, -0.25 * PI),
-  'O1-AVR': project(0.4 * PI, -0.5 * PI),
-  'O2-AVR': project(-0.4 * PI, 0.5 * PI),
-  'F7-AVR': project(-0.2 * PI, -0.5 * PI),
-  'F8-AVR': project(0.2 * PI, 0.5 * PI),
-  'T3-AVR': project(0, -0.5 * PI),
-  'T4-AVR': project(0, 0.5 * PI),
-  'T5-AVR': project(0.2 * PI, -0.5 * PI),
-  'T6-AVR': project(-0.2 * PI, 0.5 * PI),
-  'FZ-AVR': project(0.5 * PI, 0.2 * PI),
-  'CZ-AVR': project(0, 0),
-  'PZ-AVR': project(-0.5 * PI, 0.2 * PI),
-}
+const positions1020 = [
+  project(-0.4 * PI, -0.5 * PI),
+  project(0.4 * PI, 0.5 * PI),
+  project(-0.25 * PI, -0.25 * PI),
+  project(0.25 * PI, 0.25 * PI),
+  project(0, -0.25 * PI),
+  project(0, 0.25 * PI),
+  project(0.25 * PI, -0.25 * PI),
+  project(-0.25 * PI, 0.25 * PI),
+  project(0.4 * PI, -0.5 * PI),
+  project(-0.4 * PI, 0.5 * PI),
+  project(-0.2 * PI, -0.5 * PI),
+  project(0.2 * PI, 0.5 * PI),
+  project(0, -0.5 * PI),
+  project(0, 0.5 * PI),
+  project(0.2 * PI, -0.5 * PI),
+  project(-0.2 * PI, 0.5 * PI),
+  project(0.5 * PI, 0.2 * PI),
+  project(0, 0),
+  project(-0.5 * PI, 0.2 * PI),
+]
 
 function distance(v1, v2) {
   const x = (v2[0] - v1[0]);
@@ -114,7 +114,7 @@ export class CorrelationPlotData {
   }
   interpolate(k, frequency, point) {
     for (let i = 0; i < this.weights.length; i++) {
-      this.weights[i] = 1 / distance(point, positions1020[this.electrodes[i]]);
+      this.weights[i] = 1 / distance(point, positions1020[this.labelIndices[i]]);
     }
     let intensity = 0;
     let wsum = 0;
